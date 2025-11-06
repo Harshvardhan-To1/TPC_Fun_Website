@@ -6,24 +6,347 @@
   <title>Placemate — AI Chatbot</title>
   <link rel="stylesheet" href="applyDrive.css">
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+
+    header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .logo {
+      height: 40px;
+      width: auto;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      color: #333;
+      font-weight: 600;
+    }
+
+    nav {
+      display: flex;
+      gap: 1rem;
+    }
+
+    nav a {
+      text-decoration: none;
+      color: #555;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+
+    nav a:hover {
+      background: #667eea;
+      color: white;
+      transform: translateY(-2px);
+    }
+
+    main.wrap {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    main h2 {
+      text-align: center;
+      color: white;
+      font-size: 2rem;
+      margin-bottom: 2rem;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
     .chat-container {
-      max-width: 600px;
+      max-width: 800px;
       margin: 0 auto;
-      padding: 20px;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 600px;
     }
+
+    .chat-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1.5rem;
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: 600;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
     .chat-box {
-      border: 1px solid #ccc;
-      padding: 10px;
-      height: 300px;
-      overflow-y: scroll;
+      flex: 1;
+      padding: 2rem;
+      overflow-y: auto;
+      background: #f8f9fa;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
     }
+
+    .chat-box::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .chat-box::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+
+    .chat-box::-webkit-scrollbar-thumb {
+      background: #667eea;
+      border-radius: 4px;
+    }
+
+    .chat-box::-webkit-scrollbar-thumb:hover {
+      background: #5568d3;
+    }
+
+    .message {
+      display: flex;
+      margin-bottom: 1rem;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .message.user {
+      justify-content: flex-end;
+    }
+
+    .message.bot {
+      justify-content: flex-start;
+    }
+
+    .message-content {
+      max-width: 70%;
+      padding: 1rem 1.25rem;
+      border-radius: 18px;
+      position: relative;
+      word-wrap: break-word;
+      line-height: 1.5;
+    }
+
+    .message.user .message-content {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-bottom-right-radius: 4px;
+      box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+    }
+
+    .message.bot .message-content {
+      background: white;
+      color: #333;
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      border: 1px solid #e9ecef;
+    }
+
+    .message-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+      opacity: 0.8;
+    }
+
+    .message.user .message-label {
+      text-align: right;
+      color: #667eea;
+    }
+
+    .message.bot .message-label {
+      text-align: left;
+      color: #764ba2;
+    }
+
+    .chat-input-container {
+      padding: 1.5rem;
+      background: white;
+      border-top: 1px solid #e9ecef;
+    }
+
     .chat-input {
       display: flex;
-      margin-top: 10px;
+      gap: 0.75rem;
+      align-items: center;
     }
+
     .chat-input input {
-      flex-grow: 1;
-      padding: 5px;
+      flex: 1;
+      padding: 1rem 1.25rem;
+      border: 2px solid #e9ecef;
+      border-radius: 25px;
+      font-size: 1rem;
+      outline: none;
+      transition: all 0.3s ease;
+      font-family: inherit;
+    }
+
+    .chat-input input:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .chat-input button {
+      padding: 1rem 2rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 25px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .chat-input button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+    }
+
+    .chat-input button:active {
+      transform: translateY(0);
+    }
+
+    .chat-input button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .typing-indicator {
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 1rem 1.25rem;
+      background: white;
+      border-radius: 18px;
+      border-bottom-left-radius: 4px;
+      max-width: 70%;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      border: 1px solid #e9ecef;
+    }
+
+    .typing-indicator.active {
+      display: flex;
+    }
+
+    .typing-dot {
+      width: 8px;
+      height: 8px;
+      background: #667eea;
+      border-radius: 50%;
+      animation: typing 1.4s infinite;
+    }
+
+    .typing-dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .typing-dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes typing {
+      0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.7;
+      }
+      30% {
+        transform: translateY(-10px);
+        opacity: 1;
+      }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 2rem;
+      color: #6c757d;
+    }
+
+    .empty-state-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+
+    .empty-state-text {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .empty-state-subtext {
+      font-size: 0.9rem;
+      opacity: 0.7;
+    }
+
+    @media (max-width: 768px) {
+      header {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+      }
+
+      nav {
+        width: 100%;
+        justify-content: center;
+      }
+
+      main h2 {
+        font-size: 1.5rem;
+      }
+
+      .chat-container {
+        height: calc(100vh - 250px);
+        border-radius: 15px;
+      }
+
+      .message-content {
+        max-width: 85%;
+      }
+
+      .chat-input button {
+        padding: 1rem 1.5rem;
+      }
     }
   </style>
 </head>
@@ -41,35 +364,137 @@
 <main class="wrap">
   <h2>AI Chatbot</h2>
   <div class="chat-container">
-    <div class="chat-box" id="chat-box"></div>
-    <div class="chat-input">
-      <input type="text" id="user-message" placeholder="Type your message...">
-      <button onclick="sendMessage()">Send</button>
+    <div class="chat-header">
+      💬 Chat with our AI Assistant
+    </div>
+    <div class="chat-box" id="chat-box">
+      <div class="empty-state">
+        <div class="empty-state-icon">🤖</div>
+        <div class="empty-state-text">Welcome to Placemate AI!</div>
+        <div class="empty-state-subtext">Start a conversation by typing a message below</div>
+      </div>
+    </div>
+    <div class="chat-input-container">
+      <div class="chat-input">
+        <input type="text" id="user-message" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
+        <button onclick="sendMessage()" id="send-button">Send</button>
+      </div>
     </div>
   </div>
 </main>
 <script>
+  let isFirstMessage = true;
+
+  function handleKeyPress(event) {
+    if (event.key === 'Enter') {
+      sendMessage();
+    }
+  }
+
   async function sendMessage() {
-    const userMessage = document.getElementById('user-message').value;
+    const userMessage = document.getElementById('user-message').value.trim();
     const chatBox = document.getElementById('chat-box');
+    const sendButton = document.getElementById('send-button');
+    const inputField = document.getElementById('user-message');
+
+    if (!userMessage) return;
+
+    // Remove empty state if first message
+    if (isFirstMessage) {
+      chatBox.innerHTML = '';
+      isFirstMessage = false;
+    }
 
     // Display user message
-    chatBox.innerHTML += `<p><strong>You:</strong> ${userMessage}</p>`;
+    const userMessageDiv = document.createElement('div');
+    userMessageDiv.className = 'message user';
+    userMessageDiv.innerHTML = `
+      <div>
+        <div class="message-label">You</div>
+        <div class="message-content">${escapeHtml(userMessage)}</div>
+      </div>
+    `;
+    chatBox.appendChild(userMessageDiv);
 
-    // Send message to the chatbot
-    const response = await fetch('/chatbot', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: userMessage })
-    });
-    const data = await response.json();
-    const botResponse = data.response;
+    // Clear input and disable button
+    inputField.value = '';
+    sendButton.disabled = true;
 
-    // Display bot response
-    chatBox.innerHTML += `<p><strong>Chatbot:</strong> ${botResponse}</p>`;
+    // Show typing indicator
+    const typingIndicator = document.createElement('div');
+    typingIndicator.className = 'message bot';
+    typingIndicator.innerHTML = `
+      <div>
+        <div class="message-label">AI Assistant</div>
+        <div class="typing-indicator active">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+      </div>
+    `;
+    chatBox.appendChild(typingIndicator);
 
-    // Clear the input field
-    document.getElementById('user-message').value = '';
+    // Scroll to bottom
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    try {
+      // Send message to the chatbot
+      const response = await fetch('/chatbot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userMessage })
+      });
+      const data = await response.json();
+      const botResponse = data.response;
+
+      // Remove typing indicator
+      chatBox.removeChild(typingIndicator);
+
+      // Display bot response
+      const botMessageDiv = document.createElement('div');
+      botMessageDiv.className = 'message bot';
+      botMessageDiv.innerHTML = `
+        <div>
+          <div class="message-label">AI Assistant</div>
+          <div class="message-content">${escapeHtml(botResponse)}</div>
+        </div>
+      `;
+      chatBox.appendChild(botMessageDiv);
+
+    } catch (error) {
+      // Remove typing indicator
+      chatBox.removeChild(typingIndicator);
+
+      // Display error message
+      const errorMessageDiv = document.createElement('div');
+      errorMessageDiv.className = 'message bot';
+      errorMessageDiv.innerHTML = `
+        <div>
+          <div class="message-label">AI Assistant</div>
+          <div class="message-content">Sorry, I encountered an error. Please try again.</div>
+        </div>
+      `;
+      chatBox.appendChild(errorMessageDiv);
+    }
+
+    // Re-enable button
+    sendButton.disabled = false;
+    inputField.focus();
+
+    // Scroll to bottom
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  function escapeHtml(text) {
+    const map = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
   }
 </script>
 </body>

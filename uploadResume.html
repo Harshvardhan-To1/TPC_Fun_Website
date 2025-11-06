@@ -5,6 +5,420 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Placemate — Upload Resume</title>
   <link rel="stylesheet" href="uploadResume.css">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+
+    header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .logo {
+      height: 40px;
+      width: auto;
+    }
+
+    nav {
+      display: flex;
+      gap: 1rem;
+    }
+
+    nav a {
+      text-decoration: none;
+      color: #555;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+
+    nav a:hover {
+      background: #667eea;
+      color: white;
+      transform: translateY(-2px);
+    }
+
+    main.wrap {
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    main h2 {
+      text-align: center;
+      color: white;
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    main > p {
+      text-align: center;
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 1.1rem;
+      margin-bottom: 2rem;
+    }
+
+    .upload-card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 3rem;
+      margin-bottom: 2rem;
+    }
+
+    .upload-area {
+      border: 3px dashed #cbd5e0;
+      border-radius: 15px;
+      padding: 3rem 2rem;
+      text-align: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+      background: #f8f9fa;
+    }
+
+    .upload-area:hover {
+      border-color: #667eea;
+      background: #f0f4ff;
+    }
+
+    .upload-area.drag-over {
+      border-color: #667eea;
+      background: #e6edff;
+      transform: scale(1.02);
+    }
+
+    .upload-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      color: #667eea;
+    }
+
+    .upload-text {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 0.5rem;
+    }
+
+    .upload-subtext {
+      font-size: 1rem;
+      color: #6c757d;
+      margin-bottom: 1rem;
+    }
+
+    .upload-hint {
+      font-size: 0.9rem;
+      color: #adb5bd;
+    }
+
+    #resume {
+      display: none;
+    }
+
+    .browse-button {
+      display: inline-block;
+      padding: 0.75rem 2rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 25px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 1rem;
+      border: none;
+      font-size: 1rem;
+    }
+
+    .browse-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .file-preview {
+      display: none;
+      margin-top: 2rem;
+      padding: 2rem;
+      background: #f8f9fa;
+      border-radius: 15px;
+      border: 2px solid #e9ecef;
+    }
+
+    .file-preview.active {
+      display: block;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .file-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .file-icon {
+      font-size: 3rem;
+      color: #667eea;
+    }
+
+    .file-details {
+      flex: 1;
+    }
+
+    .file-name {
+      font-weight: 600;
+      color: #333;
+      font-size: 1.1rem;
+      margin-bottom: 0.25rem;
+      word-break: break-all;
+    }
+
+    .file-size {
+      color: #6c757d;
+      font-size: 0.9rem;
+    }
+
+    .remove-file {
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 35px;
+      height: 35px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .remove-file:hover {
+      background: #c82333;
+      transform: rotate(90deg);
+    }
+
+    .progress-container {
+      display: none;
+      margin-top: 1rem;
+    }
+
+    .progress-container.active {
+      display: block;
+    }
+
+    .progress-bar-bg {
+      width: 100%;
+      height: 10px;
+      background: #e9ecef;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      width: 0%;
+      transition: width 0.3s ease;
+      border-radius: 10px;
+    }
+
+    .progress-text {
+      text-align: center;
+      margin-top: 0.5rem;
+      color: #6c757d;
+      font-size: 0.9rem;
+    }
+
+    .upload-button {
+      width: 100%;
+      padding: 1rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 1.5rem;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .upload-button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+    }
+
+    .upload-button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .message {
+      display: none;
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
+      margin-top: 1.5rem;
+      font-weight: 500;
+      animation: slideIn 0.3s ease;
+    }
+
+    .message.active {
+      display: block;
+    }
+
+    .message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 2px solid #c3e6cb;
+    }
+
+    .message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 2px solid #f5c6cb;
+    }
+
+    .supported-formats {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      background: #f8f9fa;
+      border-radius: 12px;
+      border-left: 4px solid #667eea;
+    }
+
+    .supported-formats h3 {
+      margin-top: 0;
+      color: #333;
+      font-size: 1.1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .formats-list {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .format-tag {
+      background: white;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      color: #667eea;
+      font-weight: 600;
+      border: 2px solid #667eea;
+      font-size: 0.9rem;
+    }
+
+    .tips-section {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      background: #fff3cd;
+      border-radius: 12px;
+      border-left: 4px solid #ffc107;
+    }
+
+    .tips-section h3 {
+      margin-top: 0;
+      color: #856404;
+      font-size: 1.1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .tips-section ul {
+      margin: 0;
+      padding-left: 1.5rem;
+      color: #856404;
+    }
+
+    .tips-section li {
+      margin-bottom: 0.5rem;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 768px) {
+      header {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+      }
+
+      nav {
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      main h2 {
+        font-size: 1.8rem;
+      }
+
+      .upload-card {
+        padding: 1.5rem;
+      }
+
+      .upload-area {
+        padding: 2rem 1rem;
+      }
+
+      .upload-icon {
+        font-size: 3rem;
+      }
+
+      .upload-text {
+        font-size: 1.1rem;
+      }
+
+      .file-info {
+        flex-direction: column;
+        text-align: center;
+      }
+    }
+  </style>
 </head>
 <body>
 <header>
@@ -20,19 +434,222 @@
 
 <main class="wrap">
   <h2>Upload Your Resume</h2>
-  <p>Submit your resume to apply for drives and internships.</p>
+  <p>Submit your resume to apply for drives and internships</p>
 
   <div class="upload-card">
-    <form action="/upload" method="post" enctype="multipart/form-data">
-      <label for="resume">Choose Resume (PDF/DOCX):</label>
+    <form id="upload-form" action="/upload" method="post" enctype="multipart/form-data">
+      <div class="upload-area" id="upload-area">
+        <div class="upload-icon">📄</div>
+        <div class="upload-text">Drag & Drop your resume here</div>
+        <div class="upload-subtext">or</div>
+        <button type="button" class="browse-button" onclick="document.getElementById('resume').click()">
+          Browse Files
+        </button>
+        <div class="upload-hint">Maximum file size: 5MB</div>
+      </div>
+
       <input type="file" id="resume" name="resume" accept=".pdf,.doc,.docx" required>
-      <button type="submit">Upload</button>
+
+      <div class="file-preview" id="file-preview">
+        <div class="file-info">
+          <div class="file-icon">📎</div>
+          <div class="file-details">
+            <div class="file-name" id="file-name"></div>
+            <div class="file-size" id="file-size"></div>
+          </div>
+          <button type="button" class="remove-file" onclick="removeFile()" title="Remove file">×</button>
+        </div>
+
+        <div class="progress-container" id="progress-container">
+          <div class="progress-bar-bg">
+            <div class="progress-bar" id="progress-bar"></div>
+          </div>
+          <div class="progress-text" id="progress-text">Uploading... 0%</div>
+        </div>
+
+        <button type="submit" class="upload-button" id="upload-button">
+          🚀 Upload Resume
+        </button>
+      </div>
+
+      <div class="message" id="message"></div>
     </form>
+
+    <div class="supported-formats">
+      <h3>📋 Supported Formats</h3>
+      <div class="formats-list">
+        <span class="format-tag">PDF</span>
+        <span class="format-tag">DOC</span>
+        <span class="format-tag">DOCX</span>
+      </div>
+    </div>
+
+    <div class="tips-section">
+      <h3>💡 Tips for a Great Resume</h3>
+      <ul>
+        <li>Keep your resume to 1-2 pages</li>
+        <li>Use a professional font and clean layout</li>
+        <li>Highlight relevant skills and experiences</li>
+        <li>Include quantifiable achievements</li>
+        <li>Proofread for spelling and grammar errors</li>
+      </ul>
+    </div>
   </div>
 </main>
 
 <footer>
   © Placemate — Campus Placement Management
 </footer>
+
+<script>
+  const uploadArea = document.getElementById('upload-area');
+  const fileInput = document.getElementById('resume');
+  const filePreview = document.getElementById('file-preview');
+  const fileName = document.getElementById('file-name');
+  const fileSize = document.getElementById('file-size');
+  const uploadForm = document.getElementById('upload-form');
+  const uploadButton = document.getElementById('upload-button');
+  const progressContainer = document.getElementById('progress-container');
+  const progressBar = document.getElementById('progress-bar');
+  const progressText = document.getElementById('progress-text');
+  const message = document.getElementById('message');
+
+  // Drag and drop events
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, preventDefaults, false);
+  });
+
+  function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  ['dragenter', 'dragover'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, () => {
+      uploadArea.classList.add('drag-over');
+    }, false);
+  });
+
+  ['dragleave', 'drop'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, () => {
+      uploadArea.classList.remove('drag-over');
+    }, false);
+  });
+
+  uploadArea.addEventListener('drop', (e) => {
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      fileInput.files = files;
+      handleFileSelect();
+    }
+  });
+
+  fileInput.addEventListener('change', handleFileSelect);
+
+  function handleFileSelect() {
+    const file = fileInput.files[0];
+    if (file) {
+      // Validate file type
+      const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      if (!validTypes.includes(file.type)) {
+        showMessage('Please upload a valid file format (PDF, DOC, or DOCX)', 'error');
+        fileInput.value = '';
+        return;
+      }
+
+      // Validate file size (5MB)
+      const maxSize = 5 * 1024 * 1024;
+      if (file.size > maxSize) {
+        showMessage('File size exceeds 5MB. Please upload a smaller file.', 'error');
+        fileInput.value = '';
+        return;
+      }
+
+      // Display file info
+      fileName.textContent = file.name;
+      fileSize.textContent = formatFileSize(file.size);
+      filePreview.classList.add('active');
+      message.classList.remove('active');
+    }
+  }
+
+  function removeFile() {
+    fileInput.value = '';
+    filePreview.classList.remove('active');
+    message.classList.remove('active');
+  }
+
+  function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  }
+
+  uploadForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const file = fileInput.files[0];
+    if (!file) {
+      showMessage('Please select a file to upload', 'error');
+      return;
+    }
+
+    // Show progress
+    progressContainer.classList.add('active');
+    uploadButton.disabled = true;
+    message.classList.remove('active');
+
+    const formData = new FormData();
+    formData.append('resume', file);
+
+    try {
+      // Simulate upload with XMLHttpRequest for progress tracking
+      const xhr = new XMLHttpRequest();
+
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          const percentComplete = Math.round((e.loaded / e.total) * 100);
+          progressBar.style.width = percentComplete + '%';
+          progressText.textContent = `Uploading... ${percentComplete}%`;
+        }
+      });
+
+      xhr.addEventListener('load', () => {
+        if (xhr.status === 200) {
+          progressText.textContent = 'Upload complete! ✓';
+          showMessage('Resume uploaded successfully! 🎉', 'success');
+          
+          // Reset form after delay
+          setTimeout(() => {
+            removeFile();
+            progressContainer.classList.remove('active');
+            uploadButton.disabled = false;
+          }, 2000);
+        } else {
+          throw new Error('Upload failed');
+        }
+      });
+
+      xhr.addEventListener('error', () => {
+        throw new Error('Upload failed');
+      });
+
+      xhr.open('POST', uploadForm.action);
+      xhr.send(formData);
+
+    } catch (error) {
+      progressContainer.classList.remove('active');
+      uploadButton.disabled = false;
+      showMessage('Upload failed. Please try again.', 'error');
+    }
+  });
+
+  function showMessage(text, type) {
+    message.textContent = text;
+    message.className = 'message active ' + type;
+  }
+</script>
 </body>
 </html>
