@@ -15,6 +15,7 @@
   <nav>
     <a href="homePage.html">🏠 Home</a>
     <a href="applyDrive.html">📝 Apply for Drive</a>
+    <a href="chatbot.html">🤖 AI Chatbot</a>
   </nav>
 </header>
 
@@ -23,14 +24,20 @@
   <p>Apply to the latest placement drives and internships.</p>
   <div class="card-grid">
     <div class="card">
-      <h3>DEF Corp Internship</h3>
-      <p>Application Deadline: 15 Nov 2025</p>
-      <button>Apply Now</button>
+      <form action="/apply" method="post">
+        <h3>DEF Corp Internship</h3>
+        <p>Application Deadline: 15 Nov 2025</p>
+        <input type="hidden" name="company_name" value="DEF Corp Internship">
+        <button type="submit">Apply Now</button>
+      </form>
     </div>
     <div class="card">
-      <h3>GHI Ltd Placement</h3>
-      <p>Application Deadline: 18 Nov 2025</p>
-      <button>Apply Now</button>
+      <form action="/apply" method="post">
+        <h3>GHI Ltd Placement</h3>
+        <p>Application Deadline: 18 Nov 2025</p>
+        <input type="hidden" name="company_name" value="GHI Ltd Placement">
+        <button type="submit">Apply Now</button>
+      </form>
     </div>
   </div>
 </main>
