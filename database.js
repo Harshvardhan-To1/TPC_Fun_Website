@@ -1,11 +1,15 @@
 const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('./placements.db', sqlite3.OPEN_READWRITE, (err) => {
+
+// Create database with OPEN_READWRITE | OPEN_CREATE flags to create if doesn't exist
+const db = new sqlite3.Database('./placements.db', sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
   if (err) {
-    console.error(err.message);
+    console.error('Database connection error:', err.message);
+    process.exit(1); // Exit if can't connect to database
   }
   console.log('Connected to the placements database.');
 });
 
+// Create tables if they don't exist
 db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -13,9 +17,10 @@ db.serialize(() => {
     password TEXT NOT NULL
   )`, (err) => {
     if (err) {
-      console.error(err.message);
+      console.error('Error creating users table:', err.message);
+    } else {
+      console.log('Users table ready.');
     }
-    console.log('Users table created.');
   });
 
   db.run(`CREATE TABLE IF NOT EXISTS profiles (
@@ -28,9 +33,10 @@ db.serialize(() => {
     FOREIGN KEY (user_id) REFERENCES users (id)
   )`, (err) => {
     if (err) {
-      console.error(err.message);
+      console.error('Error creating profiles table:', err.message);
+    } else {
+      console.log('Profiles table ready.');
     }
-    console.log('Profiles table created.');
   });
 
   db.run(`CREATE TABLE IF NOT EXISTS applications (
@@ -39,9 +45,10 @@ db.serialize(() => {
     application_date TEXT NOT NULL
   )`, (err) => {
     if (err) {
-      console.error(err.message);
+      console.error('Error creating applications table:', err.message);
+    } else {
+      console.log('Applications table ready.');
     }
-    console.log('Applications table created.');
   });
 });
 
