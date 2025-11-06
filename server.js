@@ -1,12 +1,18 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const db = require('./database.js');
+require('dotenv').config();
+
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const app = express();
 const port = 3000;
 
 // Serve static files from the root directory
 app.use(express.static(__dirname));
+app.use(express.urlencoded({ extended: true }));
 
 // Set up storage for uploaded files
 const storage = multer.diskStorage({
@@ -32,21 +38,36 @@ app.post('/upload', upload.single('resume'), (req, res) => {
   res.send(`File uploaded successfully: ${req.file.path}`);
 });
 
+// Route to handle drive applications
+app.post('/apply', (req, res) => {
+  const { company_name } = req.body;
+  const application_date = new Date().toISOString();
+
+  const sql = `INSERT INTO applications (company_name, application_date) VALUES (?, ?)`;
+  db.run(sql, [company_name, application_date], (err) => {
+    if (err) {
+      console.error(err.message);
+      return res.status(500).send('Error saving application.');
+    }
+    res.redirect('/applySuccess.html');
+  });
+});
+
 // Chatbot route
 app.use(express.json());
-app.post('/chatbot', (req, res) => {
+app.post('/chatbot', async (req, res) => {
   const userMessage = req.body.message;
-  let botResponse = "I'm sorry, I don't understand. Please ask me about placements, internships, or resumes.";
 
-  if (userMessage.includes('hello') || userMessage.includes('hi')) {
-    botResponse = 'Hello! How can I help you today?';
-  } else if (userMessage.includes('placements') || userMessage.includes('internships')) {
-    botResponse = 'You can find all the latest placement and internship drives on the "Apply for Drive" page.';
-  } else if (userMessage.includes('resume')) {
-    botResponse = 'You can upload your resume on the "Upload Resume" page.';
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-pro"});
+    const result = await model.generateContent(userMessage);
+    const response = await result.response;
+    const text = response.text();
+    res.json({ response: text });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ response: 'Error generating response from AI.' });
   }
-
-  res.json({ response: botResponse });
 });
 
 
