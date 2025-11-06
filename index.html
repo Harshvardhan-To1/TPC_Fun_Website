@@ -7,12 +7,282 @@
     <link rel="stylesheet" href="style.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Notification Bell Styles */
+        .header-with-notification {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        .notification-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .notification-bell {
+            position: relative;
+            cursor: pointer;
+            font-size: 1.8rem;
+            color: #667eea;
+            padding: 10px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            background: rgba(102, 126, 234, 0.1);
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .notification-bell:hover {
+            background: rgba(102, 126, 234, 0.2);
+            transform: scale(1.1);
+        }
+
+        .notification-bell.ring {
+            animation: ring 0.5s ease-in-out;
+        }
+
+        @keyframes ring {
+            0%, 100% { transform: rotate(0deg); }
+            10%, 30%, 50%, 70%, 90% { transform: rotate(-10deg); }
+            20%, 40%, 60%, 80% { transform: rotate(10deg); }
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #e53e3e;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(229, 62, 62, 0.4);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* Notification Dropdown */
+        .notification-dropdown {
+            position: absolute;
+            top: 60px;
+            right: 0;
+            width: 380px;
+            max-height: 500px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .notification-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .notification-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .notification-header h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .mark-read-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .mark-read-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .notification-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .notification-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            gap: 12px;
+        }
+
+        .notification-item:hover {
+            background: #f7fafc;
+        }
+
+        .notification-item.unread {
+            background: #eef2ff;
+        }
+
+        .notification-item.unread:hover {
+            background: #e0e7ff;
+        }
+
+        .notification-icon {
+            font-size: 1.8rem;
+            flex-shrink: 0;
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 4px;
+            font-size: 0.95rem;
+        }
+
+        .notification-message {
+            color: #4a5568;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            margin-bottom: 6px;
+        }
+
+        .notification-time {
+            color: #718096;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .unread-dot {
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: auto;
+        }
+
+        .notification-footer {
+            padding: 12px 20px;
+            text-align: center;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .view-all-btn {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .view-all-btn:hover {
+            color: #5568d3;
+        }
+
+        .no-notifications {
+            padding: 60px 20px;
+            text-align: center;
+            color: #718096;
+        }
+
+        .no-notifications-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            opacity: 0.5;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .notification-dropdown {
+                width: 320px;
+                right: -20px;
+            }
+
+            header {
+                padding: 15px 20px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .notification-dropdown {
+                width: calc(100vw - 40px);
+                right: -10px;
+            }
+
+            .logo-text {
+                font-size: 1.2rem !important;
+            }
+        }
+    </style>
 </head>
 <body>
 
 <header>
-    <img class="logo" src="images/logo3.png" alt="SCSIT DAVV Logo" onerror="this.style.display='none'; document.querySelector('.logo-text').style.display='block';">
-    <h1 class="logo-text" style="display: none;">🎓 SCSIT DAVV</h1>
+    <div class="header-with-notification">
+        <div>
+            <img class="logo" src="images/logo3.png" alt="SCSIT DAVV Logo" onerror="this.style.display='none'; document.querySelector('.logo-text').style.display='block';">
+            <h1 class="logo-text" style="display: none;">🎓 SCSIT DAVV</h1>
+        </div>
+        
+        <!-- Notification Bell -->
+        <div class="notification-wrapper">
+            <div class="notification-bell" id="notificationBell">
+                🔔
+                <span class="notification-badge" id="notificationBadge">3</span>
+            </div>
+            
+            <!-- Notification Dropdown -->
+            <div class="notification-dropdown" id="notificationDropdown">
+                <div class="notification-header">
+                    <h3>Notifications</h3>
+                    <button class="mark-read-btn" onclick="markAllRead()">Mark all read</button>
+                </div>
+                
+                <div class="notification-list" id="notificationList">
+                    <!-- Notifications will be inserted here by JavaScript -->
+                </div>
+                
+                <div class="notification-footer">
+                    <a href="notifications.html" class="view-all-btn">View All Notifications →</a>
+                </div>
+            </div>
+        </div>
+    </div>
 </header>
 
 <main>
@@ -53,7 +323,7 @@
         </div>
     </div>
 
-    <!-- Portal Services Section - SIMPLIFIED TO 3 SERVICES -->
+    <!-- Portal Services Section -->
     <div class="services-section">
         <h2>Explore Our Portal Services</h2>
         <p class="services-subtitle">Everything you need for a successful placement journey</p>
@@ -73,7 +343,7 @@
                 <button class="service-btn">Chat Now →</button>
             </div>
 
-            <div class="service-card" onclick="location.href='uploadResume.html'">
+            <div class="service-card" onclick="location.href='upload.html'">
                 <div class="service-icon">📄</div>
                 <h3>Upload Resume</h3>
                 <p>Keep your resume updated and ready for recruiters</p>
@@ -138,6 +408,7 @@
 </footer>
 
 <script>
+    // Typing animation
     const words = ["luck", "destiny", "hard work", "focus", "consistency", "preparation"];
     let wordIndex = 0;
     let charIndex = 0;
@@ -170,6 +441,143 @@
 
     document.addEventListener("DOMContentLoaded", () => {
         if (words.length) setTimeout(type, 500);
+        loadNotifications();
+    });
+
+    // Notification system
+    let notifications = [
+        {
+            id: 1,
+            icon: '💼',
+            title: 'New Company Drive',
+            message: 'TCS is conducting campus placement drive on 15th Nov 2025',
+            time: '2 hours ago',
+            unread: true,
+            link: '#'
+        },
+        {
+            id: 2,
+            icon: '📝',
+            title: 'Application Update',
+            message: 'Your application for Infosys has been shortlisted for interview',
+            time: '5 hours ago',
+            unread: true,
+            link: '#'
+        },
+        {
+            id: 3,
+            icon: '📅',
+            title: 'Interview Scheduled',
+            message: 'Interview with Wipro scheduled for 20th Nov at 10:00 AM',
+            time: '1 day ago',
+            unread: true,
+            link: '#'
+        },
+        {
+            id: 4,
+            icon: '✅',
+            title: 'Profile Updated',
+            message: 'Your profile has been successfully updated',
+            time: '2 days ago',
+            unread: false,
+            link: '#'
+        },
+        {
+            id: 5,
+            icon: '🎓',
+            title: 'Resume Tips',
+            message: 'Check out our latest guide on creating an impressive resume',
+            time: '3 days ago',
+            unread: false,
+            link: '#'
+        }
+    ];
+
+    function loadNotifications() {
+        const notificationList = document.getElementById('notificationList');
+        const notificationBadge = document.getElementById('notificationBadge');
+        
+        // Count unread notifications
+        const unreadCount = notifications.filter(n => n.unread).length;
+        
+        // Update badge
+        if (unreadCount > 0) {
+            notificationBadge.textContent = unreadCount;
+            notificationBadge.style.display = 'flex';
+        } else {
+            notificationBadge.style.display = 'none';
+        }
+
+        // Clear existing notifications
+        notificationList.innerHTML = '';
+
+        // Display notifications or empty state
+        if (notifications.length === 0) {
+            notificationList.innerHTML = `
+                <div class="no-notifications">
+                    <div class="no-notifications-icon">🔔</div>
+                    <p>No notifications yet</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Add notifications to list
+        notifications.forEach(notification => {
+            const notificationItem = document.createElement('div');
+            notificationItem.className = `notification-item ${notification.unread ? 'unread' : ''}`;
+            notificationItem.onclick = () => markAsRead(notification.id);
+            
+            notificationItem.innerHTML = `
+                <div class="notification-icon">${notification.icon}</div>
+                <div class="notification-content">
+                    <div class="notification-title">${notification.title}</div>
+                    <div class="notification-message">${notification.message}</div>
+                    <div class="notification-time">
+                        <span>🕐 ${notification.time}</span>
+                        ${notification.unread ? '<span class="unread-dot"></span>' : ''}
+                    </div>
+                </div>
+            `;
+            
+            notificationList.appendChild(notificationItem);
+        });
+    }
+
+    function markAsRead(notificationId) {
+        const notification = notifications.find(n => n.id === notificationId);
+        if (notification) {
+            notification.unread = false;
+            loadNotifications();
+        }
+    }
+
+    function markAllRead() {
+        notifications.forEach(n => n.unread = false);
+        loadNotifications();
+    }
+
+    // Toggle notification dropdown
+    const notificationBell = document.getElementById('notificationBell');
+    const notificationDropdown = document.getElementById('notificationDropdown');
+
+    notificationBell.addEventListener('click', (e) => {
+        e.stopPropagation();
+        notificationDropdown.classList.toggle('show');
+        notificationBell.classList.add('ring');
+        setTimeout(() => notificationBell.classList.remove('ring'), 500);
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!notificationDropdown.contains(e.target) && !notificationBell.contains(e.target)) {
+            notificationDropdown.classList.remove('show');
+        }
+    });
+
+    // Prevent dropdown from closing when clicking inside
+    notificationDropdown.addEventListener('click', (e) => {
+        e.stopPropagation();
     });
 </script>
 

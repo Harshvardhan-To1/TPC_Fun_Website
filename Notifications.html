@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notifications - SCSIT DAVV</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    /* Header */
+    .header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 20px 50px;
+      border-radius: 15px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      color: #667eea;
+      font-size: 1.8rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 20px;
+    }
+
+    .nav-links a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      padding: 8px 16px;
+      border-radius: 8px;
+    }
+
+    .nav-links a:hover {
+      background: #667eea;
+      color: white;
+    }
+
+    /* Container */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+      background: white;
+      border-radius: 15px;
+      padding: 20px 30px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .filter-tabs {
+      display: flex;
+      gap: 10px;
+    }
+
+    .filter-tab {
+      padding: 8px 20px;
+      border: none;
+      background: #f7fafc;
+      color: #4a5568;
+      border-radius: 25px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .filter-tab.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .mark-all-btn {
+      padding: 8px 20px;
+      background: white;
+      color: #667eea;
+      border: 2px solid #667eea;
+      border-radius: 25px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .mark-all-btn:hover {
+      background: #667eea;
+      color: white;
+    }
+
+    /* Notifications Card */
+    .notifications-card {
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    .notification-item {
+      padding: 25px 30px;
+      border-bottom: 1px solid #e2e8f0;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      display: flex;
+      gap: 20px;
+    }
+
+    .notification-item:hover {
+      background: #f7fafc;
+    }
+
+    .notification-item.unread {
+      background: #eef2ff;
+    }
+
+    .notification-item.unread:hover {
+      background: #e0e7ff;
+    }
+
+    .notification-icon-large {
+      font-size: 2.5rem;
+      flex-shrink: 0;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .notification-details {
+      flex: 1;
+    }
+
+    .notification-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 8px;
+    }
+
+    .notification-title {
+      font-weight: 700;
+      color: #2d3748;
+      font-size: 1.1rem;
+    }
+
+    .notification-time {
+      color: #718096;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .notification-message {
+      color: #4a5568;
+      line-height: 1.6;
+      margin-bottom: 10px;
+    }
+
+    .notification-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .notification-btn {
+      padding: 6px 16px;
+      border: none;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: #f7fafc;
+      color: #4a5568;
+    }
+
+    .btn-secondary:hover {
+      background: #e2e8f0;
+    }
+
+    .unread-indicator {
+      width: 12px;
+      height: 12px;
+      background: #667eea;
+      border-radius: 50%;
+      display: inline-block;
+      margin-left: 8px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+    }
+
+    .empty-icon {
+      font-size: 5rem;
+      margin-bottom: 20px;
+      opacity: 0.5;
+    }
+
+    .empty-text {
+      color: #4a5568;
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+    }
+
+    .empty-subtext {
+      color: #718096;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .header {
+        flex-direction: column;
+        padding: 20px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 1.4rem;
+      }
+
+      .nav-links {
+        margin-top: 15px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .filter-bar {
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .notification-item {
+        padding: 20px 15px;
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .notification-icon-large {
+        margin: 0 auto;
+      }
+
+      .notification-header-row {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .notification-actions {
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <h1>🔔 All Notifications</h1>
+    <nav class="nav-links">
+      <a href="/">Home</a>
+      <a href="/profile.html">Profile</a>
+      <a href="/chatbot.html">Chatbot</a>
+    </nav>
+  </div>
+
+  <div class="container">
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="filter-tabs">
+        <button class="filter-tab active" onclick="filterNotifications('all')">All</button>
+        <button class="filter-tab" onclick="filterNotifications('unread')">Unread</button>
+        <button class="filter-tab" onclick="filterNotifications('placements')">Placements</button>
+        <button class="filter-tab" onclick="filterNotifications('applications')">Applications</button>
+      </div>
+      <button class="mark-all-btn" onclick="markAllAsRead()">Mark all as read</button>
+    </div>
+
+    <!-- Notifications List -->
+    <div class="notifications-card" id="notificationsList">
+      <!-- Notifications will be inserted here -->
+    </div>
+  </div>
+
+  <script>
+    let notifications = [
+      {
+        id: 1,
+        icon: '💼',
+        title: 'New Company Drive - TCS',
+        message: 'TCS is conducting a campus placement drive on 15th November 2025. Eligible students can apply through the portal. The drive will include aptitude test, technical interview, and HR round.',
+        time: '2 hours ago',
+        unread: true,
+        category: 'placements',
+        actions: ['View Details', 'Apply Now']
+      },
+      {
+        id: 2,
+        icon: '📝',
+        title: 'Application Shortlisted',
+        message: 'Congratulations! Your application for Infosys has been shortlisted for the next round. Please check your email for further instructions and interview schedule.',
+        time: '5 hours ago',
+        unread: true,
+        category: 'applications',
+        actions: ['View Application']
+      },
+      {
+        id: 3,
+        icon: '📅',
+        title: 'Interview Scheduled - Wipro',
+        message: 'Your interview with Wipro has been scheduled for 20th November 2025 at 10:00 AM. Please be prepared with your resume and arrive 15 minutes early. Location: Campus Auditorium.',
+        time: '1 day ago',
+        unread: true,
+        category: 'applications',
+        actions: ['Add to Calendar', 'View Details']
+      },
+      {
+        id: 4,
+        icon: '🎓',
+        title: 'Placement Preparation Workshop',
+        message: 'Join us for a comprehensive placement preparation workshop covering resume building, interview skills, and aptitude test strategies. Date: 12th November, Time: 2:00 PM',
+        time: '2 days ago',
+        unread: false,
+        category: 'placements',
+        actions: ['Register']
+      },
+      {
+        id: 5,
+        icon: '✅',
+        title: 'Profile Updated Successfully',
+        message: 'Your profile has been successfully updated with the new information. Recruiters can now view your updated profile.',
+        time: '2 days ago',
+        unread: false,
+        category: 'applications',
+        actions: []
+      },
+      {
+        id: 6,
+        icon: '🏢',
+        title: 'New Company Registered',
+        message: 'Accenture has registered for campus placements. They are looking for candidates with strong technical and communication skills. Application deadline: 18th November.',
+        time: '3 days ago',
+        unread: false,
+        category: 'placements',
+        actions: ['View Company']
+      },
+      {
+        id: 7,
+        icon: '📊',
+        title: 'Resume Tips & Tricks',
+        message: 'Check out our latest guide on creating an impressive resume that stands out. Learn about ATS optimization, keyword usage, and formatting best practices.',
+        time: '3 days ago',
+        unread: false,
+        category: 'placements',
+        actions: ['Read Guide']
+      },
+      {
+        id: 8,
+        icon: '🎯',
+        title: 'Application Deadline Reminder',
+        message: 'Reminder: The application deadline for Cognizant placement drive is tomorrow (10th November). Don\'t miss this opportunity!',
+        time: '4 days ago',
+        unread: false,
+        category: 'applications',
+        actions: ['Apply Now']
+      }
+    ];
+
+    let currentFilter = 'all';
+
+    function loadNotifications(filter = 'all') {
+      const notificationsList = document.getElementById('notificationsList');
+      notificationsList.innerHTML = '';
+
+      let filteredNotifications = notifications;
+
+      // Apply filter
+      if (filter === 'unread') {
+        filteredNotifications = notifications.filter(n => n.unread);
+      } else if (filter !== 'all') {
+        filteredNotifications = notifications.filter(n => n.category === filter);
+      }
+
+      // Show empty state if no notifications
+      if (filteredNotifications.length === 0) {
+        notificationsList.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">🔔</div>
+            <div class="empty-text">No notifications found</div>
+            <div class="empty-subtext">You're all caught up!</div>
+          </div>
+        `;
+        return;
+      }
+
+      // Display notifications
+      filteredNotifications.forEach(notification => {
+        const notificationItem = document.createElement('div');
+        notificationItem.className = `notification-item ${notification.unread ? 'unread' : ''}`;
+        
+        const actionsHTML = notification.actions.length > 0 
+          ? `<div class="notification-actions">
+              ${notification.actions.map(action => 
+                `<button class="notification-btn ${action.includes('Apply') || action.includes('View Details') ? 'btn-primary' : 'btn-secondary'}" onclick="handleAction('${action}', ${notification.id})">${action}</button>`
+              ).join('')}
+            </div>`
+          : '';
+
+        notificationItem.innerHTML = `
+          <div class="notification-icon-large">${notification.icon}</div>
+          <div class="notification-details">
+            <div class="notification-header-row">
+              <div class="notification-title">
+                ${notification.title}
+                ${notification.unread ? '<span class="unread-indicator"></span>' : ''}
+              </div>
+              <div class="notification-time">🕐 ${notification.time}</div>
+            </div>
+            <div class="notification-message">${notification.message}</div>
+            ${actionsHTML}
+          </div>
+        `;
+
+        notificationItem.addEventListener('click', (e) => {
+          if (!e.target.classList.contains('notification-btn')) {
+            markAsRead(notification.id);
+          }
+        });
+
+        notificationsList.appendChild(notificationItem);
+      });
+    }
+
+    function filterNotifications(filter) {
+      currentFilter = filter;
+      
+      // Update active tab
+      document.querySelectorAll('.filter-tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      event.target.classList.add('active');
+
+      // Load filtered notifications
+      loadNotifications(filter);
+    }
+
+    function markAsRead(notificationId) {
+      const notification = notifications.find(n => n.id === notificationId);
+      if (notification) {
+        notification.unread = false;
+        loadNotifications(currentFilter);
+      }
+    }
+
+    function markAllAsRead() {
+      notifications.forEach(n => n.unread = false);
+      loadNotifications(currentFilter);
+    }
+
+    function handleAction(action, notificationId) {
+      alert(`Action: ${action} for notification ${notificationId}`);
+      // Here you can add actual functionality for each action
+      markAsRead(notificationId);
+    }
+
+    // Load notifications on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      loadNotifications();
+    });
+  </script>
+</body>
+</html>
