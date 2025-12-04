@@ -17,12 +17,38 @@ db.serialize(() => {
     email TEXT,
     password TEXT NOT NULL,
     is_verified INTEGER DEFAULT 0,
-    verification_token TEXT
+    verification_code TEXT,
+    code_expiry TEXT
   )`, (err) => {
     if (err) {
       console.error('Error creating users table:', err.message);
     } else {
       console.log('Users table ready.');
+      
+      // Check if we need to add new columns to existing table
+      db.all("PRAGMA table_info(users)", (err, columns) => {
+        if (err) {
+          console.error('Error checking table schema:', err);
+          return;
+        }
+        
+        const hasVerificationCode = columns.some(col => col.name === 'verification_code');
+        const hasCodeExpiry = columns.some(col => col.name === 'code_expiry');
+        
+        if (!hasVerificationCode) {
+          db.run("ALTER TABLE users ADD COLUMN verification_code TEXT", (err) => {
+            if (err) console.error('Error adding verification_code column:', err);
+            else console.log('Added verification_code column to users table');
+          });
+        }
+        
+        if (!hasCodeExpiry) {
+          db.run("ALTER TABLE users ADD COLUMN code_expiry TEXT", (err) => {
+            if (err) console.error('Error adding code_expiry column:', err);
+            else console.log('Added code_expiry column to users table');
+          });
+        }
+      });
     }
   });
 
