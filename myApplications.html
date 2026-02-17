@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Applications</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+    }
+
+    header {
+      background: #0f172a;
+      color: #fff;
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+
+    header nav {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    header nav a {
+      color: #fff;
+      text-decoration: none;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.9rem;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 16px auto;
+      padding: 0 14px;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .card h3 {
+      margin: 0 0 8px;
+    }
+
+    .meta {
+      color: #334155;
+      line-height: 1.5;
+      font-size: 0.9rem;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid #cbd5e1;
+      font-size: 0.82rem;
+      margin-right: 8px;
+      margin-bottom: 8px;
+      background: #f1f5f9;
+    }
+
+    .events {
+      margin-top: 10px;
+      border-top: 1px dashed #cbd5e1;
+      padding-top: 8px;
+      font-size: 0.88rem;
+      color: #334155;
+    }
+
+    button {
+      font: inherit;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 10px;
+      background: #1d4ed8;
+      color: #fff;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .empty {
+      padding: 30px;
+      text-align: center;
+      background: #fff;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>My Application Timeline</h1>
+    <nav>
+      <a href="/student/drives">Open Drives</a>
+      <a href="/student/documents">Documents</a>
+      <a href="/student/helpdesk">Helpdesk</a>
+      <a href="/profile.html">Profile</a>
+    </nav>
+  </header>
+
+  <main>
+    <div id="applications-container">Loading your applications...</div>
+  </main>
+
+  <script>
+    async function requestJson(url, options = {}) {
+      const response = await fetch(url, options);
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'Request failed');
+      return data;
+    }
+
+    async function fetchEvents(applicationId) {
+      const events = await requestJson(`/api/applications/${applicationId}/events`);
+      const container = document.getElementById(`events-${applicationId}`);
+      if (!events.length) {
+        container.innerHTML = '<p>No round updates yet.</p>';
+        return;
+      }
+      container.innerHTML = events.map((event) => `
+        <div style="margin-bottom: 8px;">
+          <strong>${event.round_name}</strong> - ${event.status}<br>
+          <small>${new Date(event.created_at).toLocaleString()}</small><br>
+          <span>${event.remarks || ''}</span>
+        </div>
+      `).join('');
+    }
+
+    async function loadApplications() {
+      try {
+        const applications = await requestJson('/api/my-applications');
+        const container = document.getElementById('applications-container');
+        if (!applications.length) {
+          container.innerHTML = `
+            <div class="empty">
+              <h3>No applications yet</h3>
+              <p>Apply to open drives to start your placement journey.</p>
+              <a href="/student/drives">Browse Drives</a>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = applications.map((application) => `
+          <div class="card">
+            <h3>${application.company_name} ${application.role_title ? `- ${application.role_title}` : ''}</h3>
+            <span class="status">Status: ${application.status}</span>
+            <span class="status">Round: ${application.current_round || 'Application Submitted'}</span>
+            <div class="meta">
+              Applied on: ${new Date(application.application_date).toLocaleString()}<br>
+              Location: ${application.location || 'N/A'} | Package: ${application.package_lpa || '-'} LPA<br>
+              Deadline: ${application.deadline ? new Date(application.deadline).toLocaleString() : 'N/A'}
+            </div>
+            <button onclick="fetchEvents(${application.id})">Load Round Timeline</button>
+            <div id="events-${application.id}" class="events"></div>
+          </div>
+        `).join('');
+      } catch (error) {
+        document.getElementById('applications-container').innerHTML = `<div class="empty">${error.message}</div>`;
+      }
+    }
+
+    loadApplications();
+  </script>
+</body>
+</html>

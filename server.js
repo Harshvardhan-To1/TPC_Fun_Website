@@ -1,17 +1,25 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const db = require('./database.js');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
 require('dotenv').config();
 const Groq = require('groq-sdk');
 const nodemailer = require('nodemailer');
-const crypto = require('crypto');
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const app = express();
 const port = 3000;
+
+// Ensure upload directories exist for all modules
+['uploads', 'uploads/documents', 'uploads/offers'].forEach((dirPath) => {
+  const absolutePath = path.join(__dirname, dirPath);
+  if (!fs.existsSync(absolutePath)) {
+    fs.mkdirSync(absolutePath, { recursive: true });
+  }
+});
 
 // Email transporter configuration
 const transporter = nodemailer.createTransport({
@@ -59,6 +67,26 @@ const storage = multer.diskStorage({
   }
 });
 const upload = multer({ storage: storage });
+
+const documentStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/documents/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  }
+});
+const documentUpload = multer({ storage: documentStorage });
+
+const offerStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/offers/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  }
+});
+const offerUpload = multer({ storage: offerStorage });
 
 // Helper function to send HTML error pages
 function sendErrorPage(res, statusCode, message) {
@@ -176,6 +204,33 @@ async function sendVerificationEmail(email, code, username) {
   }
 }
 
+function dbGetAsync(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.get(sql, params, (err, row) => {
+      if (err) return reject(err);
+      resolve(row);
+    });
+  });
+}
+
+function dbAllAsync(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.all(sql, params, (err, rows) => {
+      if (err) return reject(err);
+      resolve(rows);
+    });
+  });
+}
+
+function dbRunAsync(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.run(sql, params, function onRun(err) {
+      if (err) return reject(err);
+      resolve({ lastID: this.lastID, changes: this.changes });
+    });
+  });
+}
+
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
@@ -190,16 +245,80 @@ app.post('/upload', upload.single('resume'), (req, res) => {
 
 // Route to handle drive applications
 app.post('/apply', (req, res) => {
-  const { company_name } = req.body;
-  const application_date = new Date().toISOString();
-  const sql = `INSERT INTO applications (company_name, application_date) VALUES (?, ?)`;
-  db.run(sql, [company_name, application_date], (err) => {
-    if (err) {
-      console.error(err.message);
-      return sendErrorPage(res, 500, 'Error saving application.');
+  const { company_name, drive_id } = req.body;
+  const applicationDate = new Date().toISOString();
+
+  const insertApplication = (resolvedCompanyName, resolvedDriveId = null) => {
+    const insertSql = `
+      INSERT INTO applications (
+        user_id,
+        drive_id,
+        company_name,
+        application_date,
+        status,
+        current_round,
+        updated_at
+      ) VALUES (?, ?, ?, ?, 'Applied', 'Application Submitted', ?)
+    `;
+
+    const runInsert = () => {
+      db.run(
+        insertSql,
+        [req.session.userId || null, resolvedDriveId, resolvedCompanyName, applicationDate, applicationDate],
+        (err) => {
+          if (err) {
+            if (err.message && err.message.includes('UNIQUE constraint failed')) {
+              return sendErrorPage(res, 400, 'You have already applied to this drive.');
+            }
+            console.error('Application insert error:', err.message);
+            return sendErrorPage(res, 500, 'Error saving application.');
+          }
+          return res.redirect('/applySuccess.html');
+        }
+      );
+    };
+
+    if (req.session.userId && resolvedDriveId) {
+      db.get(
+        'SELECT id FROM applications WHERE user_id = ? AND drive_id = ?',
+        [req.session.userId, resolvedDriveId],
+        (dupErr, existingApplication) => {
+          if (dupErr) {
+            console.error('Duplicate check failed:', dupErr.message);
+            return sendErrorPage(res, 500, 'Could not verify duplicate application.');
+          }
+          if (existingApplication) {
+            return sendErrorPage(res, 400, 'You have already applied to this drive.');
+          }
+          return runInsert();
+        }
+      );
+      return;
     }
-    res.redirect('/applySuccess.html');
-  });
+
+    runInsert();
+  };
+
+  if (drive_id) {
+    const driveSql = `SELECT id, company_name FROM drives WHERE id = ? AND status = 'published'`;
+    db.get(driveSql, [drive_id], (driveErr, drive) => {
+      if (driveErr) {
+        console.error('Drive lookup error:', driveErr.message);
+        return sendErrorPage(res, 500, 'Error fetching drive.');
+      }
+      if (!drive) {
+        return sendErrorPage(res, 404, 'Drive not found or not published.');
+      }
+      return insertApplication(drive.company_name, drive.id);
+    });
+    return;
+  }
+
+  if (!company_name) {
+    return sendErrorPage(res, 400, 'Drive/company details are required.');
+  }
+
+  return insertApplication(company_name, null);
 });
 
 // Original non-streaming chatbot route (kept for backward compatibility)
@@ -641,6 +760,41 @@ const protectedRoute = (req, res, next) => {
   next();
 };
 
+const protectedApiRoute = (req, res, next) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ error: 'Authentication required.' });
+  }
+  next();
+};
+
+const adminRoute = (req, res, next) => {
+  if (!req.session.adminId) {
+    return res.redirect('/adminLogin.html');
+  }
+  next();
+};
+
+const adminApiRoute = (req, res, next) => {
+  if (!req.session.adminId) {
+    return res.status(401).json({ error: 'Admin authentication required.' });
+  }
+  next();
+};
+
+const recruiterRoute = (req, res, next) => {
+  if (!req.session.recruiterId) {
+    return res.redirect('/recruiterLogin.html');
+  }
+  next();
+};
+
+const recruiterApiRoute = (req, res, next) => {
+  if (!req.session.recruiterId) {
+    return res.status(401).json({ error: 'Recruiter authentication required.' });
+  }
+  next();
+};
+
 // Logout route
 app.get('/logout', (req, res) => {
   req.session.destroy(err => {
@@ -714,6 +868,1157 @@ app.get('/auth-status', (req, res) => {
     authenticated: !!req.session.userId,
     username: req.session.username || null
   });
+});
+
+// Extended auth context for role-aware UI
+app.get('/auth-context', (req, res) => {
+  res.json({
+    student: {
+      authenticated: !!req.session.userId,
+      id: req.session.userId || null,
+      username: req.session.username || null
+    },
+    admin: {
+      authenticated: !!req.session.adminId,
+      id: req.session.adminId || null,
+      username: req.session.adminUsername || null,
+      role: req.session.adminRole || null
+    },
+    recruiter: {
+      authenticated: !!req.session.recruiterId,
+      id: req.session.recruiterId || null,
+      company_name: req.session.recruiterCompany || null
+    }
+  });
+});
+
+// Protected module pages
+app.get('/admin/dashboard', adminRoute, (req, res) => {
+  res.sendFile(path.join(__dirname, 'adminDashboard.html'));
+});
+
+app.get('/recruiter/dashboard', recruiterRoute, (req, res) => {
+  res.sendFile(path.join(__dirname, 'recruiterDashboard.html'));
+});
+
+app.get('/student/drives', protectedRoute, (req, res) => {
+  res.sendFile(path.join(__dirname, 'drives.html'));
+});
+
+app.get('/student/my-applications', protectedRoute, (req, res) => {
+  res.sendFile(path.join(__dirname, 'myApplications.html'));
+});
+
+app.get('/student/documents', protectedRoute, (req, res) => {
+  res.sendFile(path.join(__dirname, 'studentDocuments.html'));
+});
+
+app.get('/student/helpdesk', protectedRoute, (req, res) => {
+  res.sendFile(path.join(__dirname, 'helpdesk.html'));
+});
+
+// ------------------------------
+// Admin auth
+// ------------------------------
+app.post('/admin/signup', async (req, res) => {
+  const { username, email, password, role } = req.body;
+
+  if (!username || !email || !password) {
+    return res.status(400).json({ error: 'Username, email and password are required.' });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters long.' });
+  }
+
+  try {
+    const existingAdmin = await dbGetAsync(
+      'SELECT id FROM admin_users WHERE username = ? OR email = ?',
+      [username, email]
+    );
+    if (existingAdmin) {
+      return res.status(400).json({ error: 'Admin user already exists with this username/email.' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const result = await dbRunAsync(
+      'INSERT INTO admin_users (username, email, password, role) VALUES (?, ?, ?, ?)',
+      [username, email, hashedPassword, role || 'admin']
+    );
+
+    req.session.adminId = result.lastID;
+    req.session.adminUsername = username;
+    req.session.adminRole = role || 'admin';
+    req.session.save((err) => {
+      if (err) {
+        console.error('Admin signup session save error:', err);
+      }
+      res.json({ success: true, message: 'Admin account created.', adminId: result.lastID });
+    });
+  } catch (error) {
+    console.error('Admin signup error:', error);
+    res.status(500).json({ error: 'Failed to create admin account.' });
+  }
+});
+
+app.post('/admin/signin', async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username/email and password are required.' });
+  }
+
+  try {
+    const admin = await dbGetAsync(
+      'SELECT * FROM admin_users WHERE username = ? OR email = ?',
+      [username, username]
+    );
+
+    if (!admin) {
+      return res.status(401).json({ error: 'Invalid credentials.' });
+    }
+
+    const isMatch = await bcrypt.compare(password, admin.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Invalid credentials.' });
+    }
+
+    req.session.adminId = admin.id;
+    req.session.adminUsername = admin.username;
+    req.session.adminRole = admin.role;
+    req.session.save((err) => {
+      if (err) {
+        console.error('Admin signin session save error:', err);
+      }
+      res.json({ success: true, message: 'Admin signed in successfully.' });
+    });
+  } catch (error) {
+    console.error('Admin signin error:', error);
+    res.status(500).json({ error: 'Failed to sign in admin.' });
+  }
+});
+
+app.get('/admin/auth-status', (req, res) => {
+  res.json({
+    authenticated: !!req.session.adminId,
+    username: req.session.adminUsername || null,
+    role: req.session.adminRole || null
+  });
+});
+
+app.get('/admin/logout', (req, res) => {
+  delete req.session.adminId;
+  delete req.session.adminUsername;
+  delete req.session.adminRole;
+  req.session.save((err) => {
+    if (err) {
+      console.error('Admin logout session save error:', err);
+    }
+    res.redirect('/adminLogin.html');
+  });
+});
+
+// ------------------------------
+// Recruiter auth
+// ------------------------------
+app.post('/recruiter/signup', async (req, res) => {
+  const { company_name, contact_name, email, password, phone } = req.body;
+
+  if (!company_name || !contact_name || !email || !password) {
+    return res.status(400).json({ error: 'Company, contact name, email and password are required.' });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters long.' });
+  }
+
+  try {
+    const existingRecruiter = await dbGetAsync('SELECT id FROM recruiters WHERE email = ?', [email]);
+    if (existingRecruiter) {
+      return res.status(400).json({ error: 'Recruiter already registered with this email.' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const result = await dbRunAsync(
+      'INSERT INTO recruiters (company_name, contact_name, email, password, phone, is_verified) VALUES (?, ?, ?, ?, ?, 1)',
+      [company_name, contact_name, email, hashedPassword, phone || '']
+    );
+
+    req.session.recruiterId = result.lastID;
+    req.session.recruiterCompany = company_name;
+    req.session.save((err) => {
+      if (err) {
+        console.error('Recruiter signup session save error:', err);
+      }
+      res.json({ success: true, message: 'Recruiter account created.' });
+    });
+  } catch (error) {
+    console.error('Recruiter signup error:', error);
+    res.status(500).json({ error: 'Failed to create recruiter account.' });
+  }
+});
+
+app.post('/recruiter/signin', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required.' });
+  }
+
+  try {
+    const recruiter = await dbGetAsync('SELECT * FROM recruiters WHERE email = ?', [email]);
+    if (!recruiter) {
+      return res.status(401).json({ error: 'Invalid credentials.' });
+    }
+
+    const isMatch = await bcrypt.compare(password, recruiter.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Invalid credentials.' });
+    }
+
+    req.session.recruiterId = recruiter.id;
+    req.session.recruiterCompany = recruiter.company_name;
+    req.session.save((err) => {
+      if (err) {
+        console.error('Recruiter signin session save error:', err);
+      }
+      res.json({ success: true, message: 'Recruiter signed in successfully.' });
+    });
+  } catch (error) {
+    console.error('Recruiter signin error:', error);
+    res.status(500).json({ error: 'Failed to sign in recruiter.' });
+  }
+});
+
+app.get('/recruiter/auth-status', (req, res) => {
+  res.json({
+    authenticated: !!req.session.recruiterId,
+    recruiterId: req.session.recruiterId || null,
+    company_name: req.session.recruiterCompany || null
+  });
+});
+
+app.get('/recruiter/logout', (req, res) => {
+  delete req.session.recruiterId;
+  delete req.session.recruiterCompany;
+  req.session.save((err) => {
+    if (err) {
+      console.error('Recruiter logout session save error:', err);
+    }
+    res.redirect('/recruiterLogin.html');
+  });
+});
+
+// ------------------------------
+// Public and student APIs
+// ------------------------------
+app.get('/api/drives', async (req, res) => {
+  const { search, job_type, branch, batch_year } = req.query;
+  const params = [];
+
+  let sql = `
+    SELECT *
+    FROM drives
+    WHERE status = 'published'
+      AND datetime(deadline) >= datetime('now')
+  `;
+
+  if (search) {
+    sql += ' AND (company_name LIKE ? OR role_title LIKE ?)';
+    params.push(`%${search}%`, `%${search}%`);
+  }
+
+  if (job_type) {
+    sql += ' AND job_type = ?';
+    params.push(job_type);
+  }
+
+  if (branch) {
+    sql += " AND (eligible_branches IS NULL OR eligible_branches = '' OR LOWER(eligible_branches) LIKE LOWER(?))";
+    params.push(`%${branch}%`);
+  }
+
+  if (batch_year) {
+    sql += ' AND (batch_year IS NULL OR batch_year = ?)';
+    params.push(batch_year);
+  }
+
+  sql += ' ORDER BY datetime(deadline) ASC';
+
+  try {
+    const drives = await dbAllAsync(sql, params);
+    res.json(drives);
+  } catch (error) {
+    console.error('Error fetching drives:', error);
+    res.status(500).json({ error: 'Failed to fetch drives.' });
+  }
+});
+
+app.get('/api/my-applications', protectedApiRoute, async (req, res) => {
+  try {
+    const applications = await dbAllAsync(
+      `
+      SELECT
+        a.*,
+        d.role_title,
+        d.job_type,
+        d.location,
+        d.package_lpa,
+        d.deadline
+      FROM applications a
+      LEFT JOIN drives d ON d.id = a.drive_id
+      WHERE a.user_id = ?
+      ORDER BY datetime(a.application_date) DESC
+      `,
+      [req.session.userId]
+    );
+    res.json(applications);
+  } catch (error) {
+    console.error('Error fetching my applications:', error);
+    res.status(500).json({ error: 'Failed to fetch applications.' });
+  }
+});
+
+app.get('/api/applications/:applicationId/events', protectedApiRoute, async (req, res) => {
+  const { applicationId } = req.params;
+
+  try {
+    const appRecord = await dbGetAsync(
+      'SELECT id FROM applications WHERE id = ? AND user_id = ?',
+      [applicationId, req.session.userId]
+    );
+    if (!appRecord) {
+      return res.status(404).json({ error: 'Application not found.' });
+    }
+
+    const events = await dbAllAsync(
+      'SELECT * FROM application_round_events WHERE application_id = ? ORDER BY datetime(created_at) DESC',
+      [applicationId]
+    );
+    res.json(events);
+  } catch (error) {
+    console.error('Error fetching application events:', error);
+    res.status(500).json({ error: 'Failed to fetch events.' });
+  }
+});
+
+app.get('/api/announcements', async (req, res) => {
+  const nowIso = new Date().toISOString();
+  try {
+    const announcements = await dbAllAsync(
+      `
+      SELECT *
+      FROM announcements
+      WHERE is_published = 1
+        AND (scheduled_at IS NULL OR scheduled_at <= ?)
+        AND (expires_at IS NULL OR expires_at >= ?)
+      ORDER BY
+        CASE priority
+          WHEN 'high' THEN 1
+          WHEN 'normal' THEN 2
+          ELSE 3
+        END,
+        datetime(created_at) DESC
+      `,
+      [nowIso, nowIso]
+    );
+    res.json(announcements);
+  } catch (error) {
+    console.error('Error fetching announcements:', error);
+    res.status(500).json({ error: 'Failed to fetch announcements.' });
+  }
+});
+
+app.get('/api/mentors', async (req, res) => {
+  try {
+    const mentors = await dbAllAsync('SELECT * FROM mentors ORDER BY datetime(created_at) DESC');
+    res.json(mentors);
+  } catch (error) {
+    console.error('Error fetching mentors:', error);
+    res.status(500).json({ error: 'Failed to fetch mentors.' });
+  }
+});
+
+app.post('/api/mentor-sessions', protectedApiRoute, async (req, res) => {
+  const { mentor_id, session_time, notes } = req.body;
+  if (!mentor_id || !session_time) {
+    return res.status(400).json({ error: 'mentor_id and session_time are required.' });
+  }
+
+  try {
+    await dbRunAsync(
+      'INSERT INTO mentor_sessions (mentor_id, student_id, session_time, notes) VALUES (?, ?, ?, ?)',
+      [mentor_id, req.session.userId, session_time, notes || '']
+    );
+    res.json({ success: true, message: 'Mentor session request submitted.' });
+  } catch (error) {
+    console.error('Error creating mentor session:', error);
+    res.status(500).json({ error: 'Failed to request mentor session.' });
+  }
+});
+
+app.post('/api/student/documents', protectedApiRoute, documentUpload.single('document'), async (req, res) => {
+  const { doc_type } = req.body;
+
+  if (!req.file) {
+    return res.status(400).json({ error: 'Document file is required.' });
+  }
+
+  if (!doc_type) {
+    return res.status(400).json({ error: 'doc_type is required.' });
+  }
+
+  try {
+    await dbRunAsync(
+      'INSERT INTO student_documents (user_id, doc_type, file_path) VALUES (?, ?, ?)',
+      [req.session.userId, doc_type, req.file.path]
+    );
+    res.json({ success: true, message: 'Document uploaded successfully.' });
+  } catch (error) {
+    console.error('Error uploading student document:', error);
+    res.status(500).json({ error: 'Failed to upload document.' });
+  }
+});
+
+app.get('/api/student/documents', protectedApiRoute, async (req, res) => {
+  try {
+    const docs = await dbAllAsync(
+      'SELECT * FROM student_documents WHERE user_id = ? ORDER BY datetime(uploaded_at) DESC',
+      [req.session.userId]
+    );
+    res.json(docs);
+  } catch (error) {
+    console.error('Error fetching student documents:', error);
+    res.status(500).json({ error: 'Failed to fetch documents.' });
+  }
+});
+
+app.get('/api/student/offers', protectedApiRoute, async (req, res) => {
+  try {
+    const offers = await dbAllAsync(
+      `
+      SELECT o.*, d.role_title
+      FROM offer_letters o
+      LEFT JOIN drives d ON d.id = o.drive_id
+      WHERE o.user_id = ?
+      ORDER BY datetime(o.uploaded_at) DESC
+      `,
+      [req.session.userId]
+    );
+    res.json(offers);
+  } catch (error) {
+    console.error('Error fetching student offers:', error);
+    res.status(500).json({ error: 'Failed to fetch offers.' });
+  }
+});
+
+app.put('/api/student/offers/:offerId/acceptance', protectedApiRoute, async (req, res) => {
+  const { offerId } = req.params;
+  const { acceptance_status } = req.body;
+
+  if (!['accepted', 'declined', 'pending'].includes(acceptance_status)) {
+    return res.status(400).json({ error: 'Invalid acceptance_status.' });
+  }
+
+  try {
+    const result = await dbRunAsync(
+      'UPDATE offer_letters SET acceptance_status = ? WHERE id = ? AND user_id = ?',
+      [acceptance_status, offerId, req.session.userId]
+    );
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Offer not found.' });
+    }
+    res.json({ success: true, message: 'Offer response updated.' });
+  } catch (error) {
+    console.error('Error updating offer acceptance:', error);
+    res.status(500).json({ error: 'Failed to update offer response.' });
+  }
+});
+
+app.post('/api/tickets', protectedApiRoute, async (req, res) => {
+  const { subject, description, priority } = req.body;
+
+  if (!subject || !description) {
+    return res.status(400).json({ error: 'subject and description are required.' });
+  }
+
+  try {
+    await dbRunAsync(
+      'INSERT INTO helpdesk_tickets (user_id, subject, description, priority, status, updated_at) VALUES (?, ?, ?, ?, "open", ?)',
+      [req.session.userId, subject, description, priority || 'medium', new Date().toISOString()]
+    );
+    res.json({ success: true, message: 'Ticket raised successfully.' });
+  } catch (error) {
+    console.error('Error creating ticket:', error);
+    res.status(500).json({ error: 'Failed to create ticket.' });
+  }
+});
+
+app.get('/api/tickets', protectedApiRoute, async (req, res) => {
+  try {
+    const tickets = await dbAllAsync(
+      'SELECT * FROM helpdesk_tickets WHERE user_id = ? ORDER BY datetime(created_at) DESC',
+      [req.session.userId]
+    );
+    res.json(tickets);
+  } catch (error) {
+    console.error('Error fetching user tickets:', error);
+    res.status(500).json({ error: 'Failed to fetch tickets.' });
+  }
+});
+
+// ------------------------------
+// Admin APIs
+// ------------------------------
+app.get('/api/admin/stats', adminApiRoute, async (req, res) => {
+  try {
+    const [students, drives, applications, shortlisted, selected, openTickets] = await Promise.all([
+      dbGetAsync("SELECT COUNT(*) AS count FROM users WHERE role = 'student' OR role IS NULL"),
+      dbGetAsync('SELECT COUNT(*) AS count FROM drives'),
+      dbGetAsync('SELECT COUNT(*) AS count FROM applications WHERE user_id IS NOT NULL'),
+      dbGetAsync("SELECT COUNT(*) AS count FROM applications WHERE status = 'Shortlisted'"),
+      dbGetAsync("SELECT COUNT(*) AS count FROM applications WHERE status = 'Selected'"),
+      dbGetAsync("SELECT COUNT(*) AS count FROM helpdesk_tickets WHERE status != 'resolved'")
+    ]);
+
+    res.json({
+      students: students?.count || 0,
+      drives: drives?.count || 0,
+      applications: applications?.count || 0,
+      shortlisted: shortlisted?.count || 0,
+      selected: selected?.count || 0,
+      openTickets: openTickets?.count || 0
+    });
+  } catch (error) {
+    console.error('Error fetching admin stats:', error);
+    res.status(500).json({ error: 'Failed to fetch admin stats.' });
+  }
+});
+
+app.get('/api/admin/analytics', adminApiRoute, async (req, res) => {
+  try {
+    const [monthlyApplications, statusBreakdown, branchBreakdown] = await Promise.all([
+      dbAllAsync(`
+        SELECT strftime('%Y-%m', application_date) AS month, COUNT(*) AS total
+        FROM applications
+        WHERE user_id IS NOT NULL
+        GROUP BY strftime('%Y-%m', application_date)
+        ORDER BY month DESC
+        LIMIT 12
+      `),
+      dbAllAsync(`
+        SELECT status, COUNT(*) AS total
+        FROM applications
+        WHERE user_id IS NOT NULL
+        GROUP BY status
+      `),
+      dbAllAsync(`
+        SELECT COALESCE(p.branch, 'Not Set') AS branch, COUNT(a.id) AS total
+        FROM users u
+        LEFT JOIN profiles p ON p.user_id = u.id
+        LEFT JOIN applications a ON a.user_id = u.id
+        WHERE u.role = 'student' OR u.role IS NULL
+        GROUP BY COALESCE(p.branch, 'Not Set')
+        ORDER BY total DESC
+      `)
+    ]);
+
+    res.json({ monthlyApplications, statusBreakdown, branchBreakdown });
+  } catch (error) {
+    console.error('Error fetching analytics:', error);
+    res.status(500).json({ error: 'Failed to fetch analytics.' });
+  }
+});
+
+app.get('/api/admin/drives', adminApiRoute, async (req, res) => {
+  try {
+    const drives = await dbAllAsync('SELECT * FROM drives ORDER BY datetime(created_at) DESC');
+    res.json(drives);
+  } catch (error) {
+    console.error('Error fetching admin drives:', error);
+    res.status(500).json({ error: 'Failed to fetch drives.' });
+  }
+});
+
+app.post('/api/admin/drives', adminApiRoute, async (req, res) => {
+  const {
+    company_name,
+    role_title,
+    job_type,
+    location,
+    package_lpa,
+    eligibility_cgpa,
+    eligibility_backlogs,
+    eligible_branches,
+    batch_year,
+    deadline,
+    description,
+    status
+  } = req.body;
+
+  if (!company_name || !role_title || !deadline) {
+    return res.status(400).json({ error: 'company_name, role_title and deadline are required.' });
+  }
+
+  try {
+    const result = await dbRunAsync(
+      `
+      INSERT INTO drives (
+        company_name, role_title, job_type, location, package_lpa,
+        eligibility_cgpa, eligibility_backlogs, eligible_branches,
+        batch_year, deadline, description, status, created_by_type, created_by_id, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'admin', ?, ?)
+      `,
+      [
+        company_name,
+        role_title,
+        job_type || 'Full-time',
+        location || '',
+        package_lpa || null,
+        eligibility_cgpa || 0,
+        eligibility_backlogs ?? 99,
+        eligible_branches || '',
+        batch_year || null,
+        deadline,
+        description || '',
+        status || 'published',
+        req.session.adminId,
+        new Date().toISOString()
+      ]
+    );
+
+    res.json({ success: true, driveId: result.lastID });
+  } catch (error) {
+    console.error('Error creating drive:', error);
+    res.status(500).json({ error: 'Failed to create drive.' });
+  }
+});
+
+app.put('/api/admin/drives/:driveId', adminApiRoute, async (req, res) => {
+  const { driveId } = req.params;
+  const {
+    company_name,
+    role_title,
+    job_type,
+    location,
+    package_lpa,
+    eligibility_cgpa,
+    eligibility_backlogs,
+    eligible_branches,
+    batch_year,
+    deadline,
+    description,
+    status
+  } = req.body;
+
+  try {
+    const result = await dbRunAsync(
+      `
+      UPDATE drives
+      SET company_name = ?, role_title = ?, job_type = ?, location = ?, package_lpa = ?,
+          eligibility_cgpa = ?, eligibility_backlogs = ?, eligible_branches = ?,
+          batch_year = ?, deadline = ?, description = ?, status = ?, updated_at = ?
+      WHERE id = ?
+      `,
+      [
+        company_name,
+        role_title,
+        job_type,
+        location,
+        package_lpa || null,
+        eligibility_cgpa || 0,
+        eligibility_backlogs ?? 99,
+        eligible_branches || '',
+        batch_year || null,
+        deadline,
+        description || '',
+        status || 'published',
+        new Date().toISOString(),
+        driveId
+      ]
+    );
+
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Drive not found.' });
+    }
+    res.json({ success: true, message: 'Drive updated.' });
+  } catch (error) {
+    console.error('Error updating drive:', error);
+    res.status(500).json({ error: 'Failed to update drive.' });
+  }
+});
+
+app.delete('/api/admin/drives/:driveId', adminApiRoute, async (req, res) => {
+  const { driveId } = req.params;
+  try {
+    const result = await dbRunAsync('DELETE FROM drives WHERE id = ?', [driveId]);
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Drive not found.' });
+    }
+    res.json({ success: true, message: 'Drive deleted.' });
+  } catch (error) {
+    console.error('Error deleting drive:', error);
+    res.status(500).json({ error: 'Failed to delete drive.' });
+  }
+});
+
+app.get('/api/admin/applications', adminApiRoute, async (req, res) => {
+  try {
+    const applications = await dbAllAsync(
+      `
+      SELECT
+        a.*,
+        u.username,
+        u.email AS user_email,
+        d.company_name AS drive_company_name,
+        d.role_title
+      FROM applications a
+      LEFT JOIN users u ON u.id = a.user_id
+      LEFT JOIN drives d ON d.id = a.drive_id
+      WHERE a.user_id IS NOT NULL
+      ORDER BY datetime(a.application_date) DESC
+      `
+    );
+    res.json(applications);
+  } catch (error) {
+    console.error('Error fetching admin applications:', error);
+    res.status(500).json({ error: 'Failed to fetch applications.' });
+  }
+});
+
+app.post('/api/admin/applications/:applicationId/round-update', adminApiRoute, async (req, res) => {
+  const { applicationId } = req.params;
+  const { round_name, status, remarks } = req.body;
+
+  if (!round_name || !status) {
+    return res.status(400).json({ error: 'round_name and status are required.' });
+  }
+
+  try {
+    const appRecord = await dbGetAsync('SELECT id FROM applications WHERE id = ?', [applicationId]);
+    if (!appRecord) {
+      return res.status(404).json({ error: 'Application not found.' });
+    }
+
+    const now = new Date().toISOString();
+    await dbRunAsync(
+      'UPDATE applications SET status = ?, current_round = ?, notes = ?, updated_at = ? WHERE id = ?',
+      [status, round_name, remarks || '', now, applicationId]
+    );
+
+    await dbRunAsync(
+      `
+      INSERT INTO application_round_events
+      (application_id, round_name, status, remarks, updated_by_type, updated_by_id)
+      VALUES (?, ?, ?, ?, 'admin', ?)
+      `,
+      [applicationId, round_name, status, remarks || '', req.session.adminId]
+    );
+
+    res.json({ success: true, message: 'Round update saved.' });
+  } catch (error) {
+    console.error('Error updating application round:', error);
+    res.status(500).json({ error: 'Failed to update round status.' });
+  }
+});
+
+app.get('/api/admin/announcements', adminApiRoute, async (req, res) => {
+  try {
+    const announcements = await dbAllAsync(
+      'SELECT * FROM announcements ORDER BY datetime(created_at) DESC'
+    );
+    res.json(announcements);
+  } catch (error) {
+    console.error('Error fetching admin announcements:', error);
+    res.status(500).json({ error: 'Failed to fetch announcements.' });
+  }
+});
+
+app.post('/api/admin/announcements', adminApiRoute, async (req, res) => {
+  const { title, content, priority, scheduled_at, expires_at, is_published } = req.body;
+
+  if (!title || !content) {
+    return res.status(400).json({ error: 'title and content are required.' });
+  }
+
+  try {
+    const result = await dbRunAsync(
+      `
+      INSERT INTO announcements (title, content, priority, scheduled_at, expires_at, is_published, created_by)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+      `,
+      [
+        title,
+        content,
+        priority || 'normal',
+        scheduled_at || null,
+        expires_at || null,
+        is_published ? 1 : 0,
+        req.session.adminId
+      ]
+    );
+    res.json({ success: true, announcementId: result.lastID });
+  } catch (error) {
+    console.error('Error creating announcement:', error);
+    res.status(500).json({ error: 'Failed to create announcement.' });
+  }
+});
+
+app.put('/api/admin/announcements/:announcementId/publish', adminApiRoute, async (req, res) => {
+  const { announcementId } = req.params;
+  const { is_published } = req.body;
+
+  try {
+    const result = await dbRunAsync(
+      'UPDATE announcements SET is_published = ? WHERE id = ?',
+      [is_published ? 1 : 0, announcementId]
+    );
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Announcement not found.' });
+    }
+    res.json({ success: true, message: 'Announcement publish state updated.' });
+  } catch (error) {
+    console.error('Error updating announcement publish status:', error);
+    res.status(500).json({ error: 'Failed to update announcement.' });
+  }
+});
+
+app.get('/api/admin/interview-slots', adminApiRoute, async (req, res) => {
+  try {
+    const slots = await dbAllAsync(
+      `
+      SELECT
+        s.*,
+        u.username,
+        u.email AS user_email,
+        d.company_name,
+        d.role_title
+      FROM interview_slots s
+      LEFT JOIN users u ON u.id = s.user_id
+      LEFT JOIN drives d ON d.id = s.drive_id
+      ORDER BY datetime(s.slot_time) ASC
+      `
+    );
+    res.json(slots);
+  } catch (error) {
+    console.error('Error fetching interview slots:', error);
+    res.status(500).json({ error: 'Failed to fetch interview slots.' });
+  }
+});
+
+app.post('/api/admin/interview-slots', adminApiRoute, async (req, res) => {
+  const { drive_id, user_id, slot_time, venue, meeting_link } = req.body;
+
+  if (!drive_id || !user_id || !slot_time) {
+    return res.status(400).json({ error: 'drive_id, user_id and slot_time are required.' });
+  }
+
+  try {
+    await dbRunAsync(
+      `
+      INSERT INTO interview_slots (drive_id, user_id, slot_time, venue, meeting_link, created_by)
+      VALUES (?, ?, ?, ?, ?, ?)
+      `,
+      [drive_id, user_id, slot_time, venue || '', meeting_link || '', req.session.adminId]
+    );
+    res.json({ success: true, message: 'Interview slot scheduled.' });
+  } catch (error) {
+    console.error('Error scheduling interview slot:', error);
+    res.status(500).json({ error: 'Failed to schedule interview slot.' });
+  }
+});
+
+app.get('/api/admin/documents', adminApiRoute, async (req, res) => {
+  try {
+    const documents = await dbAllAsync(
+      `
+      SELECT d.*, u.username, u.email
+      FROM student_documents d
+      LEFT JOIN users u ON u.id = d.user_id
+      ORDER BY datetime(d.uploaded_at) DESC
+      `
+    );
+    res.json(documents);
+  } catch (error) {
+    console.error('Error fetching documents for verification:', error);
+    res.status(500).json({ error: 'Failed to fetch documents.' });
+  }
+});
+
+app.put('/api/admin/documents/:documentId/verify', adminApiRoute, async (req, res) => {
+  const { documentId } = req.params;
+  const { verification_status, verification_notes } = req.body;
+
+  if (!['approved', 'rejected', 'pending'].includes(verification_status)) {
+    return res.status(400).json({ error: 'Invalid verification_status.' });
+  }
+
+  try {
+    const result = await dbRunAsync(
+      `
+      UPDATE student_documents
+      SET verification_status = ?, verification_notes = ?, verified_by = ?, verified_at = ?
+      WHERE id = ?
+      `,
+      [verification_status, verification_notes || '', req.session.adminId, new Date().toISOString(), documentId]
+    );
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Document not found.' });
+    }
+    res.json({ success: true, message: 'Document verification updated.' });
+  } catch (error) {
+    console.error('Error verifying document:', error);
+    res.status(500).json({ error: 'Failed to verify document.' });
+  }
+});
+
+app.get('/api/admin/tickets', adminApiRoute, async (req, res) => {
+  try {
+    const tickets = await dbAllAsync(
+      `
+      SELECT t.*, u.username, u.email
+      FROM helpdesk_tickets t
+      LEFT JOIN users u ON u.id = t.user_id
+      ORDER BY
+        CASE t.status
+          WHEN 'open' THEN 1
+          WHEN 'in_progress' THEN 2
+          ELSE 3
+        END,
+        datetime(t.created_at) DESC
+      `
+    );
+    res.json(tickets);
+  } catch (error) {
+    console.error('Error fetching admin tickets:', error);
+    res.status(500).json({ error: 'Failed to fetch tickets.' });
+  }
+});
+
+app.put('/api/admin/tickets/:ticketId', adminApiRoute, async (req, res) => {
+  const { ticketId } = req.params;
+  const { status, assigned_to, priority } = req.body;
+
+  try {
+    const result = await dbRunAsync(
+      'UPDATE helpdesk_tickets SET status = ?, assigned_to = ?, priority = ?, updated_at = ? WHERE id = ?',
+      [status || 'open', assigned_to || null, priority || 'medium', new Date().toISOString(), ticketId]
+    );
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Ticket not found.' });
+    }
+    res.json({ success: true, message: 'Ticket updated.' });
+  } catch (error) {
+    console.error('Error updating ticket:', error);
+    res.status(500).json({ error: 'Failed to update ticket.' });
+  }
+});
+
+app.post('/api/admin/offer-letters', adminApiRoute, offerUpload.single('offer_letter'), async (req, res) => {
+  const { drive_id, user_id, company_name } = req.body;
+  if (!req.file) {
+    return res.status(400).json({ error: 'Offer letter file is required.' });
+  }
+  if (!drive_id || !user_id) {
+    return res.status(400).json({ error: 'drive_id and user_id are required.' });
+  }
+
+  try {
+    let finalCompanyName = company_name;
+    if (!finalCompanyName) {
+      const drive = await dbGetAsync('SELECT company_name FROM drives WHERE id = ?', [drive_id]);
+      finalCompanyName = drive?.company_name || 'Unknown Company';
+    }
+
+    await dbRunAsync(
+      `
+      INSERT INTO offer_letters (drive_id, user_id, company_name, file_path, uploaded_by)
+      VALUES (?, ?, ?, ?, ?)
+      `,
+      [drive_id, user_id, finalCompanyName, req.file.path, req.session.adminId]
+    );
+    res.json({ success: true, message: 'Offer letter uploaded.' });
+  } catch (error) {
+    console.error('Error uploading offer letter:', error);
+    res.status(500).json({ error: 'Failed to upload offer letter.' });
+  }
+});
+
+app.get('/api/admin/offer-letters', adminApiRoute, async (req, res) => {
+  try {
+    const offers = await dbAllAsync(
+      `
+      SELECT o.*, u.username, u.email, d.role_title
+      FROM offer_letters o
+      LEFT JOIN users u ON u.id = o.user_id
+      LEFT JOIN drives d ON d.id = o.drive_id
+      ORDER BY datetime(o.uploaded_at) DESC
+      `
+    );
+    res.json(offers);
+  } catch (error) {
+    console.error('Error fetching offer letters:', error);
+    res.status(500).json({ error: 'Failed to fetch offer letters.' });
+  }
+});
+
+app.get('/api/admin/reports/applications.csv', adminApiRoute, async (req, res) => {
+  const escapeCsvCell = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+
+  try {
+    const rows = await dbAllAsync(
+      `
+      SELECT
+        a.id,
+        u.username,
+        u.email,
+        a.company_name,
+        d.role_title,
+        a.status,
+        a.current_round,
+        a.application_date,
+        a.updated_at
+      FROM applications a
+      LEFT JOIN users u ON u.id = a.user_id
+      LEFT JOIN drives d ON d.id = a.drive_id
+      WHERE a.user_id IS NOT NULL
+      ORDER BY datetime(a.application_date) DESC
+      `
+    );
+
+    const header = [
+      'Application ID',
+      'Student Username',
+      'Student Email',
+      'Company',
+      'Role',
+      'Status',
+      'Current Round',
+      'Applied At',
+      'Updated At'
+    ];
+    const csvLines = [header.map(escapeCsvCell).join(',')];
+
+    rows.forEach((row) => {
+      csvLines.push(
+        [
+          row.id,
+          row.username,
+          row.email,
+          row.company_name,
+          row.role_title,
+          row.status,
+          row.current_round,
+          row.application_date,
+          row.updated_at
+        ].map(escapeCsvCell).join(',')
+      );
+    });
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="applications-report.csv"');
+    res.send(csvLines.join('\n'));
+  } catch (error) {
+    console.error('Error generating applications CSV report:', error);
+    res.status(500).json({ error: 'Failed to generate applications report.' });
+  }
+});
+
+// ------------------------------
+// Recruiter APIs
+// ------------------------------
+app.get('/api/recruiter/drives', recruiterApiRoute, async (req, res) => {
+  try {
+    const drives = await dbAllAsync(
+      `
+      SELECT *
+      FROM drives
+      WHERE created_by_type = 'recruiter' AND created_by_id = ?
+      ORDER BY datetime(created_at) DESC
+      `,
+      [req.session.recruiterId]
+    );
+    res.json(drives);
+  } catch (error) {
+    console.error('Error fetching recruiter drives:', error);
+    res.status(500).json({ error: 'Failed to fetch recruiter drives.' });
+  }
+});
+
+app.post('/api/recruiter/drives', recruiterApiRoute, async (req, res) => {
+  const {
+    role_title,
+    job_type,
+    location,
+    package_lpa,
+    eligibility_cgpa,
+    eligibility_backlogs,
+    eligible_branches,
+    batch_year,
+    deadline,
+    description
+  } = req.body;
+
+  if (!role_title || !deadline) {
+    return res.status(400).json({ error: 'role_title and deadline are required.' });
+  }
+
+  try {
+    await dbRunAsync(
+      `
+      INSERT INTO drives (
+        company_name, role_title, job_type, location, package_lpa,
+        eligibility_cgpa, eligibility_backlogs, eligible_branches,
+        batch_year, deadline, description, status, created_by_type, created_by_id, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_approval', 'recruiter', ?, ?)
+      `,
+      [
+        req.session.recruiterCompany,
+        role_title,
+        job_type || 'Full-time',
+        location || '',
+        package_lpa || null,
+        eligibility_cgpa || 0,
+        eligibility_backlogs ?? 99,
+        eligible_branches || '',
+        batch_year || null,
+        deadline,
+        description || '',
+        req.session.recruiterId,
+        new Date().toISOString()
+      ]
+    );
+
+    res.json({ success: true, message: 'Drive submitted for admin approval.' });
+  } catch (error) {
+    console.error('Error creating recruiter drive:', error);
+    res.status(500).json({ error: 'Failed to create recruiter drive.' });
+  }
+});
+
+app.get('/api/recruiter/applications', recruiterApiRoute, async (req, res) => {
+  try {
+    const applications = await dbAllAsync(
+      `
+      SELECT
+        a.*,
+        u.username,
+        u.email AS user_email,
+        d.company_name,
+        d.role_title
+      FROM applications a
+      INNER JOIN drives d ON d.id = a.drive_id
+      LEFT JOIN users u ON u.id = a.user_id
+      WHERE d.created_by_type = 'recruiter' AND d.created_by_id = ?
+      ORDER BY datetime(a.application_date) DESC
+      `,
+      [req.session.recruiterId]
+    );
+    res.json(applications);
+  } catch (error) {
+    console.error('Error fetching recruiter applications:', error);
+    res.status(500).json({ error: 'Failed to fetch recruiter applications.' });
+  }
 });
 
 // Start server
