@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Access - Placement Portal</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1d4ed8, #6d28d9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 520px;
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+    }
+
+    .header {
+      padding: 24px;
+      color: #fff;
+      background: linear-gradient(135deg, #0f172a, #334155);
+    }
+
+    .header h1 {
+      margin: 0 0 6px;
+      font-size: 1.4rem;
+    }
+
+    .content {
+      padding: 20px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .tab {
+      flex: 1;
+      border: 1px solid #d1d5db;
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .tab.active {
+      background: #1d4ed8;
+      color: #fff;
+      border-color: #1d4ed8;
+    }
+
+    .panel {
+      display: none;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .panel.active {
+      display: grid;
+    }
+
+    input, select, button {
+      font: inherit;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+    }
+
+    button.primary {
+      background: #1d4ed8;
+      border: none;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button.primary:hover {
+      background: #1e40af;
+    }
+
+    .message {
+      margin-top: 14px;
+      padding: 10px;
+      border-radius: 8px;
+      display: none;
+      font-size: 0.92rem;
+    }
+
+    .message.error {
+      display: block;
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .message.success {
+      display: block;
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .helper-links {
+      margin-top: 12px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <h1>Admin / Placement Cell Access</h1>
+      <p style="margin:0; opacity:0.9;">Manage drives, rounds, analytics, tickets and announcements.</p>
+    </div>
+    <div class="content">
+      <div class="tabs">
+        <button class="tab active" data-target="signin-panel">Sign In</button>
+        <button class="tab" data-target="signup-panel">Create Admin</button>
+      </div>
+
+      <form id="signin-panel" class="panel active">
+        <input type="text" id="signin-username" placeholder="Username or Email" required>
+        <input type="password" id="signin-password" placeholder="Password" required>
+        <button type="submit" class="primary">Sign In as Admin</button>
+      </form>
+
+      <form id="signup-panel" class="panel">
+        <input type="text" id="signup-username" placeholder="Admin Username" required>
+        <input type="email" id="signup-email" placeholder="Admin Email" required>
+        <input type="password" id="signup-password" placeholder="Password (min 6 chars)" required>
+        <select id="signup-role">
+          <option value="admin">Admin</option>
+          <option value="coordinator">Coordinator</option>
+          <option value="tpo">TPO</option>
+        </select>
+        <button type="submit" class="primary">Create Admin Account</button>
+      </form>
+
+      <div id="message" class="message"></div>
+      <div class="helper-links">
+        <a href="/">Back to Home</a>
+        <a href="/recruiterLogin.html">Recruiter Portal</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const tabs = document.querySelectorAll('.tab');
+    const messageEl = document.getElementById('message');
+
+    function showMessage(text, type) {
+      messageEl.className = `message ${type}`;
+      messageEl.textContent = text;
+    }
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        tabs.forEach((btn) => btn.classList.remove('active'));
+        tab.classList.add('active');
+        document.querySelectorAll('.panel').forEach((panel) => panel.classList.remove('active'));
+        document.getElementById(tab.dataset.target).classList.add('active');
+        messageEl.className = 'message';
+        messageEl.textContent = '';
+      });
+    });
+
+    document.getElementById('signin-panel').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      try {
+        const response = await fetch('/admin/signin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: document.getElementById('signin-username').value.trim(),
+            password: document.getElementById('signin-password').value
+          })
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          showMessage(data.error || 'Sign in failed.', 'error');
+          return;
+        }
+        showMessage('Sign in successful. Redirecting...', 'success');
+        window.location.href = '/admin/dashboard';
+      } catch (error) {
+        showMessage('Network error while signing in.', 'error');
+      }
+    });
+
+    document.getElementById('signup-panel').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      try {
+        const response = await fetch('/admin/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: document.getElementById('signup-username').value.trim(),
+            email: document.getElementById('signup-email').value.trim(),
+            password: document.getElementById('signup-password').value,
+            role: document.getElementById('signup-role').value
+          })
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          showMessage(data.error || 'Signup failed.', 'error');
+          return;
+        }
+        showMessage('Admin account created. Redirecting...', 'success');
+        window.location.href = '/admin/dashboard';
+      } catch (error) {
+        showMessage('Network error while creating account.', 'error');
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Placement Portal</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --primary: #1d4ed8;
+      --text: #0f172a;
+      --muted: #475569;
+      --border: #cbd5e1;
+      --success: #15803d;
+      --danger: #b91c1c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      background: #0f172a;
+      color: #fff;
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .actions a, .actions button {
+      color: #fff;
+      text-decoration: none;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      background: transparent;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    main {
+      padding: 16px;
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      gap: 14px;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+    }
+
+    .stat-card h3 {
+      margin: 0;
+      font-size: 1.5rem;
+      color: var(--primary);
+    }
+
+    .stat-card p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+    }
+
+    section h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 980px) {
+      .split {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    input, textarea, select, button {
+      font: inherit;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 8px;
+      align-items: end;
+    }
+
+    textarea {
+      min-height: 70px;
+      resize: vertical;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fff;
+    }
+
+    button.primary {
+      border: none;
+      border-radius: 6px;
+      padding: 10px 12px;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 10px;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 0.88rem;
+    }
+
+    th, td {
+      border: 1px solid var(--border);
+      padding: 6px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #e2e8f0;
+    }
+
+    .scroll {
+      max-height: 320px;
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .chip {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      border: 1px solid var(--border);
+    }
+
+    .chip.open { background: #fee2e2; color: #991b1b; }
+    .chip.progress { background: #fef9c3; color: #854d0e; }
+    .chip.resolved { background: #dcfce7; color: #166534; }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .message {
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      display: none;
+    }
+
+    .message.error { display: block; background: #fee2e2; color: var(--danger); }
+    .message.success { display: block; background: #dcfce7; color: var(--success); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Admin Dashboard - Placement Cell Control Center</h1>
+    <div class="actions">
+      <a href="/">Student Site</a>
+      <a href="/api/admin/reports/applications.csv">Download Applications CSV</a>
+      <button id="logout-btn">Logout</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="global-message" class="message"></div>
+
+    <div class="grid-4" id="stats-grid">
+      <div class="stat-card"><h3 id="stat-students">0</h3><p>Students</p></div>
+      <div class="stat-card"><h3 id="stat-drives">0</h3><p>Total Drives</p></div>
+      <div class="stat-card"><h3 id="stat-applications">0</h3><p>Applications</p></div>
+      <div class="stat-card"><h3 id="stat-selected">0</h3><p>Selected</p></div>
+      <div class="stat-card"><h3 id="stat-shortlisted">0</h3><p>Shortlisted</p></div>
+      <div class="stat-card"><h3 id="stat-open-tickets">0</h3><p>Open Tickets</p></div>
+    </div>
+
+    <section>
+      <h2>Analytics Overview</h2>
+      <div class="split">
+        <canvas id="applications-chart" height="120"></canvas>
+        <canvas id="status-chart" height="120"></canvas>
+      </div>
+    </section>
+
+    <section>
+      <h2>Drive Management (Admin CRUD)</h2>
+      <form id="drive-form">
+        <input type="text" id="drive-company" placeholder="Company Name" required>
+        <input type="text" id="drive-role" placeholder="Role Title" required>
+        <select id="drive-type">
+          <option value="Full-time">Full-time</option>
+          <option value="Internship">Internship</option>
+          <option value="Internship + PPO">Internship + PPO</option>
+        </select>
+        <input type="text" id="drive-location" placeholder="Location">
+        <input type="number" step="0.01" id="drive-package" placeholder="Package LPA">
+        <input type="number" step="0.01" id="drive-cgpa" placeholder="Eligibility CGPA">
+        <input type="number" id="drive-backlogs" placeholder="Max Backlogs">
+        <input type="text" id="drive-branches" placeholder="Eligible Branches (comma separated)">
+        <input type="number" id="drive-batch" placeholder="Batch Year (e.g. 2026)">
+        <input type="datetime-local" id="drive-deadline" required>
+        <select id="drive-status">
+          <option value="published">Published</option>
+          <option value="draft">Draft</option>
+          <option value="closed">Closed</option>
+        </select>
+        <textarea id="drive-description" placeholder="Description"></textarea>
+        <button class="primary" type="submit">Create Drive</button>
+      </form>
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Company</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Deadline</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="drives-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>Announcement CMS</h2>
+      <form id="announcement-form">
+        <input type="text" id="announcement-title" placeholder="Title" required>
+        <textarea id="announcement-content" placeholder="Announcement content" required></textarea>
+        <select id="announcement-priority">
+          <option value="high">High</option>
+          <option value="normal" selected>Normal</option>
+          <option value="low">Low</option>
+        </select>
+        <input type="datetime-local" id="announcement-scheduled">
+        <input type="datetime-local" id="announcement-expiry">
+        <select id="announcement-published">
+          <option value="1">Publish now</option>
+          <option value="0">Save draft</option>
+        </select>
+        <button class="primary" type="submit">Save Announcement</button>
+      </form>
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Title</th>
+              <th>Priority</th>
+              <th>Published</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="announcements-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="split">
+      <div>
+        <h2>Round Management (Shortlist / Result Update)</h2>
+        <form id="round-form">
+          <input type="number" id="round-application-id" placeholder="Application ID" required>
+          <input type="text" id="round-name" placeholder="Round Name (Aptitude/HR/etc)" required>
+          <select id="round-status">
+            <option value="Applied">Applied</option>
+            <option value="Shortlisted">Shortlisted</option>
+            <option value="Interview Scheduled">Interview Scheduled</option>
+            <option value="Selected">Selected</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+          <input type="text" id="round-remarks" placeholder="Remarks">
+          <button class="primary" type="submit">Update Round</button>
+        </form>
+      </div>
+      <div>
+        <h2>Interview Scheduler</h2>
+        <form id="slot-form">
+          <input type="number" id="slot-drive-id" placeholder="Drive ID" required>
+          <input type="number" id="slot-user-id" placeholder="User ID" required>
+          <input type="datetime-local" id="slot-time" required>
+          <input type="text" id="slot-venue" placeholder="Venue">
+          <input type="url" id="slot-link" placeholder="Meeting Link (optional)">
+          <button class="primary" type="submit">Schedule Slot</button>
+        </form>
+      </div>
+    </section>
+
+    <section>
+      <h2>Applications Overview</h2>
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Student</th>
+              <th>Company</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Round</th>
+              <th>Applied</th>
+            </tr>
+          </thead>
+          <tbody id="applications-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="split">
+      <div>
+        <h2>Document Verification Desk</h2>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Student</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>File</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="documents-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        <h2>Helpdesk Tickets</h2>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Student</th>
+                <th>Subject</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tickets-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="split">
+      <div>
+        <h2>Offer Letter Upload</h2>
+        <form id="offer-form" enctype="multipart/form-data">
+          <input type="number" id="offer-drive-id" placeholder="Drive ID" required>
+          <input type="number" id="offer-user-id" placeholder="User ID" required>
+          <input type="text" id="offer-company-name" placeholder="Company Name (optional)">
+          <input type="file" id="offer-file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" required>
+          <button class="primary" type="submit">Upload Offer Letter</button>
+        </form>
+      </div>
+      <div>
+        <h2>Recent Offer Letters</h2>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Student</th>
+                <th>Company</th>
+                <th>Status</th>
+                <th>File</th>
+              </tr>
+            </thead>
+            <tbody id="offers-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    let applicationsChart = null;
+    let statusChart = null;
+
+    function showMessage(text, type = 'success') {
+      const el = document.getElementById('global-message');
+      el.className = `message ${type}`;
+      el.textContent = text;
+      setTimeout(() => {
+        el.className = 'message';
+        el.textContent = '';
+      }, 3500);
+    }
+
+    async function requestJson(url, options = {}) {
+      const response = await fetch(url, options);
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || 'Request failed');
+      }
+      return data;
+    }
+
+    async function ensureAdminAccess() {
+      const auth = await requestJson('/admin/auth-status');
+      if (!auth.authenticated) {
+        window.location.href = '/adminLogin.html';
+      }
+    }
+
+    async function loadStats() {
+      const stats = await requestJson('/api/admin/stats');
+      document.getElementById('stat-students').textContent = stats.students;
+      document.getElementById('stat-drives').textContent = stats.drives;
+      document.getElementById('stat-applications').textContent = stats.applications;
+      document.getElementById('stat-selected').textContent = stats.selected;
+      document.getElementById('stat-shortlisted').textContent = stats.shortlisted;
+      document.getElementById('stat-open-tickets').textContent = stats.openTickets;
+    }
+
+    async function loadAnalytics() {
+      const analytics = await requestJson('/api/admin/analytics');
+      const monthLabels = analytics.monthlyApplications.slice().reverse().map((row) => row.month);
+      const monthValues = analytics.monthlyApplications.slice().reverse().map((row) => Number(row.total || 0));
+
+      if (applicationsChart) applicationsChart.destroy();
+      if (statusChart) statusChart.destroy();
+
+      applicationsChart = new Chart(document.getElementById('applications-chart'), {
+        type: 'line',
+        data: {
+          labels: monthLabels,
+          datasets: [{
+            label: 'Applications / Month',
+            data: monthValues,
+            borderColor: '#1d4ed8',
+            backgroundColor: 'rgba(29, 78, 216, 0.18)',
+            fill: true,
+            tension: 0.2
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+
+      statusChart = new Chart(document.getElementById('status-chart'), {
+        type: 'doughnut',
+        data: {
+          labels: analytics.statusBreakdown.map((row) => row.status),
+          datasets: [{
+            data: analytics.statusBreakdown.map((row) => Number(row.total || 0)),
+            backgroundColor: ['#1d4ed8', '#f59e0b', '#16a34a', '#dc2626', '#6b7280']
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    async function loadDrives() {
+      const drives = await requestJson('/api/admin/drives');
+      const tbody = document.getElementById('drives-body');
+      tbody.innerHTML = drives.map((drive) => `
+        <tr>
+          <td>${drive.id}</td>
+          <td>${drive.company_name}</td>
+          <td>${drive.role_title}</td>
+          <td>${drive.status}</td>
+          <td>${drive.deadline || ''}</td>
+          <td>
+            <button class="secondary" onclick="setDriveStatus(${drive.id}, 'published')">Publish</button>
+            <button class="secondary" onclick="setDriveStatus(${drive.id}, 'closed')">Close</button>
+            <button class="secondary" onclick="deleteDrive(${drive.id})">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function setDriveStatus(driveId, status) {
+      try {
+        const drives = await requestJson('/api/admin/drives');
+        const drive = drives.find((d) => d.id === driveId);
+        if (!drive) return;
+        await requestJson(`/api/admin/drives/${driveId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...drive, status })
+        });
+        showMessage('Drive status updated.');
+        loadDrives();
+      } catch (error) {
+        showMessage(error.message, 'error');
+      }
+    }
+
+    async function deleteDrive(driveId) {
+      if (!window.confirm('Delete this drive?')) return;
+      try {
+        await requestJson(`/api/admin/drives/${driveId}`, { method: 'DELETE' });
+        showMessage('Drive deleted.');
+        loadDrives();
+      } catch (error) {
+        showMessage(error.message, 'error');
+      }
+    }
+
+    async function loadAnnouncements() {
+      const announcements = await requestJson('/api/admin/announcements');
+      const tbody = document.getElementById('announcements-body');
+      tbody.innerHTML = announcements.map((announcement) => `
+        <tr>
+          <td>${announcement.id}</td>
+          <td>${announcement.title}</td>
+          <td>${announcement.priority}</td>
+          <td>${announcement.is_published ? 'Yes' : 'No'}</td>
+          <td>
+            <button class="secondary" onclick="toggleAnnouncement(${announcement.id}, ${announcement.is_published ? 0 : 1})">
+              ${announcement.is_published ? 'Unpublish' : 'Publish'}
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function toggleAnnouncement(id, publishFlag) {
+      try {
+        await requestJson(`/api/admin/announcements/${id}/publish`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ is_published: publishFlag })
+        });
+        showMessage('Announcement updated.');
+        loadAnnouncements();
+      } catch (error) {
+        showMessage(error.message, 'error');
+      }
+    }
+
+    async function loadApplications() {
+      const applications = await requestJson('/api/admin/applications');
+      const tbody = document.getElementById('applications-body');
+      tbody.innerHTML = applications.slice(0, 200).map((app) => `
+        <tr>
+          <td>${app.id}</td>
+          <td>${app.username || '-'}</td>
+          <td>${app.company_name}</td>
+          <td>${app.role_title || '-'}</td>
+          <td>${app.status}</td>
+          <td>${app.current_round || '-'}</td>
+          <td>${new Date(app.application_date).toLocaleString()}</td>
+        </tr>
+      `).join('');
+    }
+
+    async function loadDocuments() {
+      const docs = await requestJson('/api/admin/documents');
+      const tbody = document.getElementById('documents-body');
+      tbody.innerHTML = docs.map((doc) => `
+        <tr>
+          <td>${doc.id}</td>
+          <td>${doc.username || '-'}</td>
+          <td>${doc.doc_type}</td>
+          <td>${doc.verification_status}</td>
+          <td><a href="/${doc.file_path}" target="_blank">Open</a></td>
+          <td>
+            <button class="secondary" onclick="verifyDocument(${doc.id}, 'approved')">Approve</button>
+            <button class="secondary" onclick="verifyDocument(${doc.id}, 'rejected')">Reject</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function verifyDocument(id, status) {
+      const note = prompt('Verification note (optional):') || '';
+      try {
+        await requestJson(`/api/admin/documents/${id}/verify`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            verification_status: status,
+            verification_notes: note
+          })
+        });
+        showMessage('Document verification updated.');
+        loadDocuments();
+      } catch (error) {
+        showMessage(error.message, 'error');
+      }
+    }
+
+    async function loadTickets() {
+      const tickets = await requestJson('/api/admin/tickets');
+      const tbody = document.getElementById('tickets-body');
+      tbody.innerHTML = tickets.map((ticket) => {
+        const chipClass = ticket.status === 'resolved' ? 'resolved' : ticket.status === 'in_progress' ? 'progress' : 'open';
+        return `
+          <tr>
+            <td>${ticket.id}</td>
+            <td>${ticket.username || '-'}</td>
+            <td>${ticket.subject}</td>
+            <td><span class="chip ${chipClass}">${ticket.status}</span></td>
+            <td>${ticket.priority}</td>
+            <td>
+              <button class="secondary" onclick="updateTicket(${ticket.id}, 'in_progress')">In Progress</button>
+              <button class="secondary" onclick="updateTicket(${ticket.id}, 'resolved')">Resolve</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function updateTicket(id, status) {
+      try {
+        await requestJson(`/api/admin/tickets/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status })
+        });
+        showMessage('Ticket updated.');
+        loadTickets();
+      } catch (error) {
+        showMessage(error.message, 'error');
+      }
+    }
+
+    async function loadOffers() {
+      const offers = await requestJson('/api/admin/offer-letters');
+      const tbody = document.getElementById('offers-body');
+      tbody.innerHTML = offers.map((offer) => `
+        <tr>
+          <td>${offer.id}</td>
+          <td>${offer.username || '-'}</td>
+          <td>${offer.company_name}</td>
+          <td>${offer.acceptance_status}</td>
+          <td><a href="/${offer.file_path}" target="_blank">View</a></td>
+        </tr>
+      `).join('');
+    }
+
+    async function initialize() {
+      await ensureAdminAccess();
+      await Promise.all([
+        loadStats(),
+        loadAnalytics(),
+        loadDrives(),
+        loadAnnouncements(),
+        loadApplications(),
+        loadDocuments(),
+        loadTickets(),
+        loadOffers()
+      ]);
+    }
+
+    document.getElementById('drive-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      try {
+        await requestJson('/api/admin/drives', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            company_name: document.getElementById('drive-company').value.trim(),
+            role_title: document.getElementById('drive-role').value.trim(),
+            job_type: document.getElementById('drive-type').value,
+            location: document.getElementById('drive-location').value.trim(),
+            package_lpa: document.getElementById('drive-package').value || null,
+            eligibility_cgpa: document.getElementById('drive-cgpa').value || 0,
+            eligibility_backlogs: document.getElementById('drive-backlogs').value || 99,
+            eligible_branches: document.getElementById('drive-branches').value.trim(),
+            batch_year: document.getElementById('drive-batch').value || null,
+            deadline: document.getElementById('drive-deadline').value,
+            description: document.getElementById('drive-description').value.trim(),
+            status: document.getElementById('drive-status').value
+          })
+        });
+        showMessage('Drive created.');
+        event.target.reset();
+        loadDrives();
+        loadStats();
+      } catch (error) {
+        showMessage(error.message, 'error');
+      }
+    });
+
+    document.getElementById('announcement-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      try {
+        await requestJson('/api/admin/announcements', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: document.getElementById('announcement-title').value.trim(),
+            content: document.getElementById('announcement-content').value.trim(),
+            priority: document.getElementById('announcement-priority').value,
+            scheduled_at: document.getElementById('announcement-scheduled').value || null,
+            expires_at: document.getElementById('announcement-expiry').value || null,
+            is_published: Number(document.getElementById('announcement-published').value) === 1
+          })
+        });
+        showMessage('Announcement saved.');
+        event.target.reset();
+        loadAnnouncements();
+      } catch (error) {
+        showMessage(error.message, 'error');
+      }
+    });
+
+    document.getElementById('round-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const applicationId = document.getElementById('round-application-id').value;
+      try {
+        await requestJson(`/api/admin/applications/${applicationId}/round-update`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            round_name: document.getElementById('round-name').value.trim(),
+            status: document.getElementById('round-status').value,
+            remarks: document.getElementById('round-remarks').value.trim()
+          })
+        });
+        showMessage('Round updated.');
+        loadApplications();
+        loadStats();
+      } catch (error) {
+        showMessage(error.message, 'error');
+      }
+    });
+
+    document.getElementById('slot-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      try {
+        await requestJson('/api/admin/interview-slots', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            drive_id: Number(document.getElementById('slot-drive-id').value),
+            user_id: Number(document.getElementById('slot-user-id').value),
+            slot_time: document.getElementById('slot-time').value,
+            venue: document.getElementById('slot-venue').value.trim(),
+            meeting_link: document.getElementById('slot-link').value.trim()
+          })
+        });
+        showMessage('Interview slot scheduled.');
+        event.target.reset();
+      } catch (error) {
+        showMessage(error.message, 'error');
+      }
+    });
+
+    document.getElementById('offer-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const formData = new FormData();
+      formData.append('drive_id', document.getElementById('offer-drive-id').value);
+      formData.append('user_id', document.getElementById('offer-user-id').value);
+      formData.append('company_name', document.getElementById('offer-company-name').value.trim());
+      formData.append('offer_letter', document.getElementById('offer-file').files[0]);
+
+      try {
+        const response = await fetch('/api/admin/offer-letters', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Failed to upload offer');
+        showMessage('Offer letter uploaded.');
+        event.target.reset();
+        loadOffers();
+      } catch (error) {
+        showMessage(error.message, 'error');
+      }
+    });
+
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+      window.location.href = '/admin/logout';
+    });
+
+    initialize().catch((error) => {
+      showMessage(error.message || 'Failed to initialize admin dashboard.', 'error');
+    });
+  </script>
+</body>
+</html>

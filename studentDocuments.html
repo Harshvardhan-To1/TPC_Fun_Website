@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Documents and Offers</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+    }
+
+    header {
+      background: #1e293b;
+      color: #fff;
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+
+    header nav {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    header nav a {
+      color: #fff;
+      text-decoration: none;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.9rem;
+    }
+
+    main {
+      max-width: 1200px;
+      margin: 16px auto;
+      padding: 0 14px;
+      display: grid;
+      gap: 14px;
+    }
+
+    section {
+      background: #fff;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 14px;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 8px;
+      align-items: end;
+    }
+
+    input, select, button {
+      font: inherit;
+      padding: 9px;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+    }
+
+    button.primary {
+      border: none;
+      background: #2563eb;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 900px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 6px;
+      text-align: left;
+    }
+
+    th {
+      background: #e2e8f0;
+    }
+
+    .scroll {
+      max-height: 320px;
+      overflow: auto;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+    }
+
+    .message {
+      display: none;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 0.9rem;
+    }
+
+    .message.success { display: block; background: #dcfce7; color: #166534; }
+    .message.error { display: block; background: #fee2e2; color: #991b1b; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Documents, Offers, and Mentorship</h1>
+    <nav>
+      <a href="/student/drives">Drives</a>
+      <a href="/student/my-applications">My Applications</a>
+      <a href="/student/helpdesk">Helpdesk</a>
+      <a href="/profile.html">Profile</a>
+    </nav>
+  </header>
+
+  <main>
+    <div id="message" class="message"></div>
+
+    <section>
+      <h2 style="margin:0 0 10px;">Upload Verification Document</h2>
+      <form id="document-form" enctype="multipart/form-data">
+        <select id="doc-type" required>
+          <option value="">Select document type</option>
+          <option value="marksheet">Marksheet</option>
+          <option value="resume">Resume</option>
+          <option value="id-proof">ID Proof</option>
+          <option value="certificate">Certificate</option>
+          <option value="other">Other</option>
+        </select>
+        <input type="file" id="doc-file" required>
+        <button class="primary" type="submit">Upload</button>
+      </form>
+    </section>
+
+    <div class="grid-2">
+      <section>
+        <h2 style="margin:0 0 10px;">My Document Status</h2>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Notes</th>
+                <th>File</th>
+              </tr>
+            </thead>
+            <tbody id="documents-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2 style="margin:0 0 10px;">Offer Letters</h2>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Company</th>
+                <th>Status</th>
+                <th>File</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="offers-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <section>
+      <h2 style="margin:0 0 10px;">Alumni Mentor Connect</h2>
+      <form id="mentor-form">
+        <select id="mentor-id" required>
+          <option value="">Select mentor</option>
+        </select>
+        <input type="datetime-local" id="mentor-time" required>
+        <input type="text" id="mentor-notes" placeholder="Session topic (optional)">
+        <button class="primary" type="submit">Request Session</button>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    function showMessage(text, type = 'success') {
+      const el = document.getElementById('message');
+      el.className = `message ${type}`;
+      el.textContent = text;
+      setTimeout(() => {
+        el.className = 'message';
+        el.textContent = '';
+      }, 3500);
+    }
+
+    async function requestJson(url, options = {}) {
+      const response = await fetch(url, options);
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'Request failed');
+      return data;
+    }
+
+    async function loadDocuments() {
+      const docs = await requestJson('/api/student/documents');
+      document.getElementById('documents-body').innerHTML = docs.map((doc) => `
+        <tr>
+          <td>${doc.id}</td>
+          <td>${doc.doc_type}</td>
+          <td>${doc.verification_status}</td>
+          <td>${doc.verification_notes || '-'}</td>
+          <td><a href="/${doc.file_path}" target="_blank">Open</a></td>
+        </tr>
+      `).join('');
+    }
+
+    async function loadOffers() {
+      const offers = await requestJson('/api/student/offers');
+      document.getElementById('offers-body').innerHTML = offers.map((offer) => `
+        <tr>
+          <td>${offer.id}</td>
+          <td>${offer.company_name}</td>
+          <td>${offer.acceptance_status}</td>
+          <td><a href="/${offer.file_path}" target="_blank">View</a></td>
+          <td>
+            <button onclick="updateOffer(${offer.id}, 'accepted')">Accept</button>
+            <button onclick="updateOffer(${offer.id}, 'declined')">Decline</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function loadMentors() {
+      const mentors = await requestJson('/api/mentors');
+      const select = document.getElementById('mentor-id');
+      select.innerHTML = '<option value="">Select mentor</option>' + mentors.map((mentor) => (
+        `<option value="${mentor.id}">${mentor.name} - ${mentor.company || 'Alumni'} (${mentor.expertise || 'General'})</option>`
+      )).join('');
+    }
+
+    async function updateOffer(offerId, status) {
+      try {
+        await requestJson(`/api/student/offers/${offerId}/acceptance`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ acceptance_status: status })
+        });
+        showMessage('Offer response updated.');
+        loadOffers();
+      } catch (error) {
+        showMessage(error.message, 'error');
+      }
+    }
+
+    document.getElementById('document-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const formData = new FormData();
+      formData.append('doc_type', document.getElementById('doc-type').value);
+      formData.append('document', document.getElementById('doc-file').files[0]);
+
+      try {
+        const response = await fetch('/api/student/documents', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Upload failed');
+        showMessage('Document uploaded.');
+        event.target.reset();
+        loadDocuments();
+      } catch (error) {
+        showMessage(error.message, 'error');
+      }
+    });
+
+    document.getElementById('mentor-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      try {
+        await requestJson('/api/mentor-sessions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mentor_id: document.getElementById('mentor-id').value,
+            session_time: document.getElementById('mentor-time').value,
+            notes: document.getElementById('mentor-notes').value.trim()
+          })
+        });
+        showMessage('Mentor session requested.');
+        event.target.reset();
+      } catch (error) {
+        showMessage(error.message, 'error');
+      }
+    });
+
+    window.updateOffer = updateOffer;
+
+    (async () => {
+      try {
+        await Promise.all([loadDocuments(), loadOffers(), loadMentors()]);
+      } catch (error) {
+        showMessage(error.message, 'error');
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Available Drives</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+    }
+
+    header {
+      background: #1d4ed8;
+      color: #fff;
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    header h1 { margin: 0; font-size: 1.2rem; }
+
+    header nav {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    header nav a {
+      color: #fff;
+      text-decoration: none;
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.9rem;
+    }
+
+    main {
+      max-width: 1200px;
+      margin: 16px auto;
+      padding: 0 14px;
+      display: grid;
+      gap: 14px;
+    }
+
+    section {
+      background: #fff;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 14px;
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 8px;
+      align-items: end;
+    }
+
+    input, select, button {
+      font: inherit;
+      padding: 9px;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+    }
+
+    button.primary {
+      border: none;
+      background: #1d4ed8;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 12px;
+      display: grid;
+      gap: 8px;
+      background: #fff;
+    }
+
+    .card h3 {
+      margin: 0;
+      font-size: 1.05rem;
+    }
+
+    .meta {
+      font-size: 0.88rem;
+      color: #334155;
+      line-height: 1.5;
+    }
+
+    .chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      font-size: 0.75rem;
+      border: 1px solid #cbd5e1;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #f8fafc;
+    }
+
+    .announcement {
+      border-left: 4px solid #1d4ed8;
+      padding: 8px 10px;
+      background: #eff6ff;
+      margin-bottom: 8px;
+      border-radius: 6px;
+    }
+
+    .message {
+      display: none;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 0.9rem;
+    }
+
+    .message.error { display: block; background: #fee2e2; color: #991b1b; }
+    .message.success { display: block; background: #dcfce7; color: #166534; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Open Placement Drives</h1>
+    <nav>
+      <a href="/">Home</a>
+      <a href="/student/my-applications">My Applications</a>
+      <a href="/student/documents">My Documents</a>
+      <a href="/student/helpdesk">Helpdesk</a>
+    </nav>
+  </header>
+
+  <main>
+    <div id="message" class="message"></div>
+
+    <section>
+      <h2 style="margin:0 0 10px;">Latest Announcements</h2>
+      <div id="announcements-container">Loading announcements...</div>
+    </section>
+
+    <section>
+      <h2 style="margin:0 0 10px;">Find drives</h2>
+      <div class="filters">
+        <input type="text" id="search" placeholder="Search company/role">
+        <select id="job-type">
+          <option value="">All types</option>
+          <option value="Full-time">Full-time</option>
+          <option value="Internship">Internship</option>
+          <option value="Internship + PPO">Internship + PPO</option>
+        </select>
+        <input type="text" id="branch" placeholder="Branch (e.g. CSE)">
+        <input type="number" id="batch-year" placeholder="Batch year">
+        <button class="primary" id="search-btn">Search</button>
+      </div>
+    </section>
+
+    <section>
+      <h2 style="margin:0 0 10px;">Available Drives</h2>
+      <div id="drives-container" class="cards">Loading drives...</div>
+    </section>
+  </main>
+
+  <script>
+    function showMessage(text, type = 'success') {
+      const message = document.getElementById('message');
+      message.className = `message ${type}`;
+      message.textContent = text;
+      setTimeout(() => {
+        message.className = 'message';
+        message.textContent = '';
+      }, 3000);
+    }
+
+    async function requestJson(url, options = {}) {
+      const response = await fetch(url, options);
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'Request failed');
+      return data;
+    }
+
+    async function loadAnnouncements() {
+      try {
+        const announcements = await requestJson('/api/announcements');
+        const container = document.getElementById('announcements-container');
+        if (!announcements.length) {
+          container.innerHTML = '<p>No announcements at this moment.</p>';
+          return;
+        }
+        container.innerHTML = announcements.slice(0, 5).map((announcement) => `
+          <div class="announcement">
+            <strong>${announcement.title}</strong> (${announcement.priority})<br>
+            <span>${announcement.content}</span>
+          </div>
+        `).join('');
+      } catch (error) {
+        document.getElementById('announcements-container').textContent = error.message;
+      }
+    }
+
+    async function loadDrives() {
+      const query = new URLSearchParams();
+      const search = document.getElementById('search').value.trim();
+      const jobType = document.getElementById('job-type').value;
+      const branch = document.getElementById('branch').value.trim();
+      const batchYear = document.getElementById('batch-year').value;
+
+      if (search) query.append('search', search);
+      if (jobType) query.append('job_type', jobType);
+      if (branch) query.append('branch', branch);
+      if (batchYear) query.append('batch_year', batchYear);
+
+      try {
+        const drives = await requestJson(`/api/drives?${query.toString()}`);
+        const container = document.getElementById('drives-container');
+        if (!drives.length) {
+          container.innerHTML = '<p>No matching drives found.</p>';
+          return;
+        }
+
+        container.innerHTML = drives.map((drive) => `
+          <div class="card">
+            <h3>${drive.company_name} - ${drive.role_title}</h3>
+            <div class="chips">
+              <span class="chip">${drive.job_type || 'N/A'}</span>
+              <span class="chip">Package: ${drive.package_lpa || '-'} LPA</span>
+              <span class="chip">CGPA: ${drive.eligibility_cgpa ?? 0}+</span>
+            </div>
+            <div class="meta">
+              <strong>Location:</strong> ${drive.location || 'Not specified'}<br>
+              <strong>Branches:</strong> ${drive.eligible_branches || 'All branches'}<br>
+              <strong>Batch:</strong> ${drive.batch_year || 'Open'}<br>
+              <strong>Deadline:</strong> ${new Date(drive.deadline).toLocaleString()}
+            </div>
+            <div class="meta">${(drive.description || '').slice(0, 220)}</div>
+            <button class="primary" onclick="applyToDrive(${drive.id}, '${String(drive.company_name).replace(/'/g, "\\'")}')">Apply</button>
+          </div>
+        `).join('');
+      } catch (error) {
+        showMessage(error.message, 'error');
+      }
+    }
+
+    async function applyToDrive(driveId, companyName) {
+      try {
+        const response = await fetch('/apply', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ drive_id: driveId, company_name: companyName })
+        });
+
+        if (response.redirected) {
+          window.location.href = response.url;
+          return;
+        }
+
+        const text = await response.text();
+        if (!response.ok) {
+          showMessage('Failed to apply. You may already have applied.', 'error');
+          return;
+        }
+
+        if (text.includes('applySuccess.html')) {
+          window.location.href = '/applySuccess.html';
+          return;
+        }
+        showMessage('Application submitted.');
+      } catch (error) {
+        showMessage('Failed to submit application.', 'error');
+      }
+    }
+
+    document.getElementById('search-btn').addEventListener('click', loadDrives);
+
+    (async () => {
+      await loadAnnouncements();
+      await loadDrives();
+    })();
+  </script>
+</body>
+</html>
