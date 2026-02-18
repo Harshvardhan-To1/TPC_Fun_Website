@@ -29,6 +29,43 @@ function ensureColumn(tableName, columnName, alterSql) {
   });
 }
 
+function ensureColumnAsync(tableName, columnName, alterSql) {
+  return new Promise((resolve, reject) => {
+    db.all(`PRAGMA table_info(${tableName})`, (err, columns) => {
+      if (err) {
+        console.error(`Error checking ${tableName} schema:`, err.message);
+        return reject(err);
+      }
+
+      const hasColumn = columns.some((col) => col.name === columnName);
+      if (hasColumn) {
+        return resolve(false);
+      }
+
+      db.run(alterSql, (alterErr) => {
+        if (alterErr) {
+          console.error(`Error altering ${tableName} (${columnName}):`, alterErr.message);
+          return reject(alterErr);
+        }
+        console.log(`Added ${columnName} column to ${tableName} table`);
+        return resolve(true);
+      });
+    });
+  });
+}
+
+function createIndexSafely(indexName, sql) {
+  return new Promise((resolve) => {
+    db.run(sql, (err) => {
+      if (err) {
+        console.error(`Could not create ${indexName}:`, err.message);
+        return resolve(false);
+      }
+      return resolve(true);
+    });
+  });
+}
+
 // Create tables if they don't exist
 db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS users (
@@ -125,12 +162,28 @@ db.serialize(() => {
       console.error('Error creating applications table:', err.message);
     } else {
       console.log('Applications table ready.');
-      ensureColumn('applications', 'user_id', 'ALTER TABLE applications ADD COLUMN user_id INTEGER');
-      ensureColumn('applications', 'drive_id', 'ALTER TABLE applications ADD COLUMN drive_id INTEGER');
-      ensureColumn('applications', 'status', "ALTER TABLE applications ADD COLUMN status TEXT DEFAULT 'Applied'");
-      ensureColumn('applications', 'current_round', "ALTER TABLE applications ADD COLUMN current_round TEXT DEFAULT 'Application Submitted'");
-      ensureColumn('applications', 'notes', 'ALTER TABLE applications ADD COLUMN notes TEXT');
-      ensureColumn('applications', 'updated_at', "ALTER TABLE applications ADD COLUMN updated_at TEXT DEFAULT CURRENT_TIMESTAMP");
+      (async () => {
+        try {
+          // Keep application schema migrations sequential to support older databases safely.
+          await ensureColumnAsync('applications', 'user_id', 'ALTER TABLE applications ADD COLUMN user_id INTEGER');
+          await ensureColumnAsync('applications', 'drive_id', 'ALTER TABLE applications ADD COLUMN drive_id INTEGER');
+          await ensureColumnAsync('applications', 'status', "ALTER TABLE applications ADD COLUMN status TEXT DEFAULT 'Applied'");
+          await ensureColumnAsync('applications', 'current_round', "ALTER TABLE applications ADD COLUMN current_round TEXT DEFAULT 'Application Submitted'");
+          await ensureColumnAsync('applications', 'notes', 'ALTER TABLE applications ADD COLUMN notes TEXT');
+          await ensureColumnAsync('applications', 'updated_at', "ALTER TABLE applications ADD COLUMN updated_at TEXT DEFAULT CURRENT_TIMESTAMP");
+
+          await createIndexSafely(
+            'idx_applications_user_id',
+            'CREATE INDEX IF NOT EXISTS idx_applications_user_id ON applications(user_id)'
+          );
+          await createIndexSafely(
+            'idx_applications_drive_id',
+            'CREATE INDEX IF NOT EXISTS idx_applications_drive_id ON applications(drive_id)'
+          );
+        } catch (migrationErr) {
+          console.error('Application table migration failed:', migrationErr.message);
+        }
+      })();
     }
   });
 
@@ -346,11 +399,21 @@ db.serialize(() => {
     }
   });
 
-  db.run('CREATE INDEX IF NOT EXISTS idx_applications_user_id ON applications(user_id)');
-  db.run('CREATE INDEX IF NOT EXISTS idx_applications_drive_id ON applications(drive_id)');
-  db.run('CREATE INDEX IF NOT EXISTS idx_drives_deadline ON drives(deadline)');
-  db.run('CREATE INDEX IF NOT EXISTS idx_announcements_published ON announcements(is_published)');
-  db.run('CREATE INDEX IF NOT EXISTS idx_tickets_status ON helpdesk_tickets(status)');
+  db.run('CREATE INDEX IF NOT EXISTS idx_drives_deadline ON drives(deadline)', (err) => {
+    if (err) {
+      console.error('Could not create idx_drives_deadline:', err.message);
+    }
+  });
+  db.run('CREATE INDEX IF NOT EXISTS idx_announcements_published ON announcements(is_published)', (err) => {
+    if (err) {
+      console.error('Could not create idx_announcements_published:', err.message);
+    }
+  });
+  db.run('CREATE INDEX IF NOT EXISTS idx_tickets_status ON helpdesk_tickets(status)', (err) => {
+    if (err) {
+      console.error('Could not create idx_tickets_status:', err.message);
+    }
+  });
 });
 
 module.exports = db;

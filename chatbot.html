@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Placemate — AI Chatbot</title>
+  <title>Career Assistant | SCSIT DAVV Placement Portal</title>
   <link rel="stylesheet" href="applyDrive.css">
   <style>
     * {
@@ -578,18 +578,19 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="theme.css">
 </head>
 <body>
 <header>
   <div class="brand">
-    <img src="images/logo3.png" alt="Placemate Logo" class="logo">
-    <h1>Placemate</h1>
+    <img src="images/logo3.png" alt="SCSIT DAVV Placement Portal Logo" class="logo">
+    <h1>SCSIT DAVV Placement Portal</h1>
   </div>
   <nav>
     <a href="/">Home</a>
-    <a href="success-stories-page">Stories</a>
-    <a href="applyDrive.html">Apply for Drive</a>
-    <a href="chatbot.html">AI Chatbot</a>
+    <a href="/success-stories-page">Success Stories</a>
+    <a href="/student/drives">Drives</a>
+    <a href="chatbot.html">Career Assistant</a>
     <a href="profile.html">Profile</a>
   </nav>
   <div class="auth-links">
@@ -598,13 +599,13 @@
   </div>
 </header>
 <main class="wrap">
-  <h2>AI Chatbot</h2>
+  <h2>Career Assistant</h2>
   <div class="chat-container">
     <div class="chat-header">
       <div class="chat-header-left">
-        <span class="chat-header-icon">💬</span>
+        <span class="chat-header-icon">AI</span>
         <div class="chat-header-info">
-          <h3>Placemate AI Assistant</h3>
+          <h3>SCSIT Career Assistant</h3>
           <div class="chat-header-status">
             <span class="status-dot"></span>
             <span>Online</span>
@@ -617,8 +618,8 @@
     </div>
     <div class="chat-box" id="chat-box">
       <div class="empty-state" id="empty-state">
-        <div class="empty-state-icon">🤖</div>
-        <div class="empty-state-text">Welcome to Placemate AI!</div>
+        <div class="empty-state-icon">AI</div>
+        <div class="empty-state-text">Welcome to the Career Assistant</div>
         <div class="empty-state-subtext">Ask me anything about placements, interviews, or career guidance</div>
         <div class="quick-prompts">
           <button class="quick-prompt" onclick="usePrompt('How should I prepare for technical interviews?')">Interview prep tips</button>
@@ -694,8 +695,8 @@
     const chatBox = document.getElementById('chat-box');
     chatBox.innerHTML = `
       <div class="empty-state" id="empty-state">
-        <div class="empty-state-icon">🤖</div>
-        <div class="empty-state-text">Welcome to Placemate AI!</div>
+        <div class="empty-state-icon">AI</div>
+        <div class="empty-state-text">Welcome to the Career Assistant</div>
         <div class="empty-state-subtext">Ask me anything about placements, interviews, or career guidance</div>
         <div class="quick-prompts">
           <button class="quick-prompt" onclick="usePrompt('How should I prepare for technical interviews?')">Interview prep tips</button>
