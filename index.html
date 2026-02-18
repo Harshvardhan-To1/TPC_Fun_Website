@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SCSIT DAVV Campus Placement 2025-26</title>
+    <title>SCSIT DAVV Placement Portal 2025-26</title>
     <link rel="stylesheet" href="style.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
@@ -24,26 +24,27 @@
         .notification-bell {
             position: relative;
             cursor: pointer;
-            font-size: 1.8rem;
-            color: #667eea;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #0f172a;
             padding: 10px;
-            border-radius: 50%;
-            transition: all 0.3s ease;
-            background: rgba(102, 126, 234, 0.1);
-            width: 50px;
-            height: 50px;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            background: #f1f5f9;
+            border: 1px solid #dbe3ef;
+            width: 74px;
+            height: 44px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
         .notification-bell:hover {
-            background: rgba(102, 126, 234, 0.2);
-            transform: scale(1.1);
+            background: #e9f0fb;
         }
 
         .notification-bell.ring {
-            animation: ring 0.5s ease-in-out;
+            animation: ring 0.3s ease-in-out;
         }
 
         @keyframes ring {
@@ -54,20 +55,20 @@
 
         .notification-badge {
             position: absolute;
-            top: 5px;
-            right: 5px;
-            background: #e53e3e;
+            top: -6px;
+            right: -6px;
+            background: #dc2626;
             color: white;
             border-radius: 50%;
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             font-weight: 700;
-            box-shadow: 0 2px 8px rgba(229, 62, 62, 0.4);
-            animation: pulse 2s ease-in-out infinite;
+            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25);
+            animation: none;
         }
 
         @keyframes pulse {
@@ -83,8 +84,9 @@
             width: 380px;
             max-height: 500px;
             background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            box-shadow: 0 18px 36px rgba(15, 23, 42, 0.12);
+            border: 1px solid #e2e8f0;
             opacity: 0;
             visibility: hidden;
             transform: translateY(-10px);
@@ -100,12 +102,13 @@
         }
 
         .notification-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
+            background: #f8fafc;
+            color: #0f172a;
+            padding: 16px 18px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-bottom: 1px solid #e2e8f0;
         }
 
         .notification-header h3 {
@@ -115,11 +118,11 @@
         }
 
         .mark-read-btn {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: none;
+            background: #e9effa;
+            color: #1e3a8a;
+            border: 1px solid #c7d7f3;
             padding: 6px 12px;
-            border-radius: 20px;
+            border-radius: 999px;
             font-size: 0.75rem;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -127,7 +130,7 @@
         }
 
         .mark-read-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
+            background: #dde8fb;
         }
 
         .notification-list {
@@ -145,19 +148,29 @@
         }
 
         .notification-item:hover {
-            background: #f7fafc;
+            background: #f8fafc;
         }
 
         .notification-item.unread {
-            background: #eef2ff;
+            background: #eff6ff;
         }
 
         .notification-item.unread:hover {
-            background: #e0e7ff;
+            background: #e0ecff;
         }
 
         .notification-icon {
-            font-size: 1.8rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #1d4ed8;
+            background: #dbeafe;
+            border-radius: 999px;
+            border: 1px solid #bfdbfe;
+            min-width: 72px;
+            text-align: center;
+            padding: 6px 10px;
+            line-height: 1.2;
+            align-self: flex-start;
             flex-shrink: 0;
         }
 
@@ -190,7 +203,7 @@
         .unread-dot {
             width: 8px;
             height: 8px;
-            background: #667eea;
+            background: #2563eb;
             border-radius: 50%;
             display: inline-block;
             margin-left: auto;
@@ -203,7 +216,7 @@
         }
 
         .view-all-btn {
-            color: #667eea;
+            color: #1d4ed8;
             text-decoration: none;
             font-weight: 600;
             font-size: 0.9rem;
@@ -211,7 +224,7 @@
         }
 
         .view-all-btn:hover {
-            color: #5568d3;
+            color: #1e40af;
         }
 
         .no-notifications {
@@ -221,9 +234,18 @@
         }
 
         .no-notifications-icon {
-            font-size: 3rem;
-            margin-bottom: 10px;
-            opacity: 0.5;
+            width: 42px;
+            height: 42px;
+            margin: 0 auto 12px;
+            border-radius: 50%;
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 700;
         }
 
         /* Responsive */
@@ -256,13 +278,13 @@
     <div class="header-with-notification">
         <div>
             <img class="logo" src="images/logo3.png" alt="SCSIT DAVV Logo" onerror="this.style.display='none'; document.querySelector('.logo-text').style.display='block';">
-            <h1 class="logo-text" style="display: none;">🎓 SCSIT DAVV</h1>
+            <h1 class="logo-text" style="display: none;">SCSIT DAVV</h1>
         </div>
         
         <!-- Notification Bell -->
         <div class="notification-wrapper">
-            <div class="notification-bell" id="notificationBell">
-                🔔
+            <div class="notification-bell" id="notificationBell" aria-label="Open notifications">
+                Alerts
                 <span class="notification-badge" id="notificationBadge">3</span>
             </div>
             
@@ -278,7 +300,7 @@
                 </div>
                 
                 <div class="notification-footer">
-                    <a href="Notifications.html" class="view-all-btn">View All Notifications →</a>
+                    <a href="Notifications.html" class="view-all-btn">View All Notifications</a>
                 </div>
             </div>
         </div>
@@ -287,16 +309,15 @@
 
 <main>
     <div class="welcome">
-        <h1>Welcome to the SCSIT, DAVV Campus Placement 2025-26</h1>
+        <h1>SCSIT DAVV Campus Placement Portal 2025-26</h1>
     </div>
 
     <div class="firstBlock">
         <!-- Left Side (Text) -->
         <div class="text-block">
             <p>
-                Get right start. <br>
-                Based on your potential <br>
-                than, <span class="highlight" id="changingWord"></span>
+                Begin your placement journey with clarity and direction.<br>
+                Build your future through <span class="highlight" id="changingWord"></span>.
             </p>
         </div>
 
@@ -311,10 +332,9 @@
             <img src="images/superset-ip-student-hero.svg" alt="Placement Process" onerror="this.src='https://illustrations.popsy.co/amber/working-vacation.svg'">
         </div>
         <div class="text-block2">
-            <h2 class="section-head">Stress-free placement process</h2>
+            <h2 class="section-head">A structured and transparent placement process</h2>
             <div class="contentf16">
-                Receive reliable information notifications, apply on the go via mobile apps, 
-                and keep better track of interview dates.
+                Access verified drive updates, apply quickly, and monitor each stage of your recruitment progress from a single portal.
             </div>
             <div class="button-group">
                 <button class="startNow primary" onclick="location.href='signin.html'">Sign In</button>
@@ -325,98 +345,98 @@
 
     <!-- Portal Services Section -->
     <div class="services-section">
-        <h2>Explore Our Portal Services</h2>
-        <p class="services-subtitle">Everything you need for a successful placement journey</p>
+        <h2>Portal Services</h2>
+        <p class="services-subtitle">Comprehensive tools for students, recruiters, and the placement cell</p>
         
         <div class="services-grid">
             <div class="service-card" onclick="location.href='profile.html'">
-                <div class="service-icon">👤</div>
+                <div class="service-icon">PF</div>
                 <h3>My Profile</h3>
-                <p>Manage your personal information, upload resume, and track your progress</p>
-                <button class="service-btn">View Profile →</button>
+                <p>Manage personal information, maintain your resume, and keep your profile placement-ready.</p>
+                <button class="service-btn">View Profile</button>
             </div>
 
             <div class="service-card" onclick="location.href='chatbot.html'">
-                <div class="service-icon">🤖</div>
-                <h3>AI Career Assistant</h3>
-                <p>Get instant help with resume tips, interview prep, and career guidance</p>
-                <button class="service-btn">Chat Now →</button>
+                <div class="service-icon">CA</div>
+                <h3>Career Assistant</h3>
+                <p>Get guidance on interview preparation, resume quality, and role-specific readiness.</p>
+                <button class="service-btn">Open Assistant</button>
             </div>
 
             <div class="service-card" onclick="location.href='uploadResume.html'">
-                <div class="service-icon">📄</div>
+                <div class="service-icon">CV</div>
                 <h3>Upload Resume</h3>
-                <p>Keep your resume updated and ready for recruiters</p>
-                <button class="service-btn">Upload →</button>
+                <p>Upload and update your latest resume so recruiters always see your current profile.</p>
+                <button class="service-btn">Upload Resume</button>
             </div>
 
             <div class="service-card" onclick="location.href='success-stories-page'">
-                <div class="service-icon">🌟</div>
+                <div class="service-icon">SS</div>
                 <h3>Success Stories</h3>
-                <p>Read inspiring stories from placed students and share your journey</p>
-                <button class="service-btn">Read Stories →</button>
+                <p>Read practical experiences shared by placed students and contribute your own insights.</p>
+                <button class="service-btn">Read Stories</button>
             </div>
 
             <div class="service-card" onclick="location.href='student/drives'">
-                <div class="service-icon">🚀</div>
+                <div class="service-icon">DP</div>
                 <h3>Live Drive Portal</h3>
-                <p>Browse dynamic drives with filters, deadlines, and one-click applications</p>
-                <button class="service-btn">Explore Drives →</button>
+                <p>Browse active opportunities with clear eligibility criteria, deadlines, and streamlined applications.</p>
+                <button class="service-btn">Explore Drives</button>
             </div>
 
             <div class="service-card" onclick="location.href='student/helpdesk'">
-                <div class="service-icon">🎫</div>
+                <div class="service-icon">HD</div>
                 <h3>Helpdesk Tickets</h3>
-                <p>Raise support tickets and track resolution status from placement cell team</p>
-                <button class="service-btn">Open Helpdesk →</button>
+                <p>Raise support requests and track resolution status with the placement cell team.</p>
+                <button class="service-btn">Open Helpdesk</button>
             </div>
 
             <div class="service-card" onclick="location.href='student/documents'">
-                <div class="service-icon">📁</div>
+                <div class="service-icon">DV</div>
                 <h3>Document Verification</h3>
-                <p>Upload marksheets and certificates for eligibility and placement verification</p>
-                <button class="service-btn">Manage Docs →</button>
+                <p>Upload and manage marksheets and certificates for eligibility and record validation.</p>
+                <button class="service-btn">Manage Documents</button>
             </div>
 
             <div class="service-card" onclick="location.href='adminLogin.html'">
-                <div class="service-icon">🛠️</div>
+                <div class="service-icon">AD</div>
                 <h3>Admin Control Center</h3>
-                <p>Placement cell dashboard for analytics, rounds, announcements, and reports</p>
-                <button class="service-btn">Admin Login →</button>
+                <p>Placement cell dashboard for analytics, rounds, announcements, and operational oversight.</p>
+                <button class="service-btn">Admin Login</button>
             </div>
 
             <div class="service-card" onclick="location.href='recruiterLogin.html'">
-                <div class="service-icon">🏢</div>
+                <div class="service-icon">RP</div>
                 <h3>Recruiter Portal</h3>
-                <p>Company-side module to register, post drives, and monitor applicants</p>
-                <button class="service-btn">Recruiter Access →</button>
+                <p>Recruiter workspace to register, publish drives, and monitor applications efficiently.</p>
+                <button class="service-btn">Recruiter Access</button>
             </div>
         </div>
     </div>
 
     <!-- Additional Features Section -->
     <div class="features-section">
-        <h2>Why Choose Our Placement Portal?</h2>
+        <h2>Why this portal works</h2>
         <div class="features-grid">
             <div class="feature-card">
-                <div class="feature-icon">📊</div>
+                <div class="feature-icon">01</div>
                 <h3>Track Applications</h3>
-                <p>Keep track of all your job applications in one place</p>
+                <p>Track every application and stage update in one consolidated dashboard.</p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon">🔔</div>
+                <div class="feature-icon">02</div>
                 <h3>Real-time Notifications</h3>
-                <p>Get instant updates about new opportunities and interviews</p>
+                <p>Receive timely alerts for new drives, shortlists, and interview schedules.</p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon">💼</div>
+                <div class="feature-icon">03</div>
                 <h3>Company Profiles</h3>
-                <p>Access detailed information about recruiting companies</p>
+                <p>Review company details and role expectations before applying.</p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon">🤖</div>
+                <div class="feature-icon">04</div>
                 <h3>AI Assistant</h3>
-                <p>Get help with resume tips and interview preparation</p>
+                <p>Strengthen preparation with practical guidance for resumes and interviews.</p>
             </div>
         </div>
     </div>
@@ -446,12 +466,12 @@
 </main>
 
 <footer>
-    <p>Made with ❤️ by SCSIT DAVV | Campus Placement Cell 2025-26</p>
+    <p>SCSIT DAVV | Campus Placement Cell | Session 2025-26</p>
 </footer>
 
 <script>
     // Typing animation
-    const words = ["luck", "destiny", "hard work", "focus", "consistency", "preparation"];
+    const words = ["preparation", "consistency", "discipline", "focus", "confidence", "execution"];
     let wordIndex = 0;
     let charIndex = 0;
     const typingSpeed = 150;
@@ -490,45 +510,45 @@
     let notifications = [
         {
             id: 1,
-            icon: '💼',
+            icon: 'Drive',
             title: 'New Company Drive',
-            message: 'TCS is conducting campus placement drive on 15th Nov 2025',
+            message: 'TCS has opened its campus placement drive for the 2025 intake.',
             time: '2 hours ago',
             unread: true,
             link: '#'
         },
         {
             id: 2,
-            icon: '📝',
+            icon: 'Status',
             title: 'Application Update',
-            message: 'Your application for Infosys has been shortlisted for interview',
+            message: 'Your application for Infosys has been shortlisted for the interview round.',
             time: '5 hours ago',
             unread: true,
             link: '#'
         },
         {
             id: 3,
-            icon: '📅',
+            icon: 'Interview',
             title: 'Interview Scheduled',
-            message: 'Interview with Wipro scheduled for 20th Nov at 10:00 AM',
+            message: 'Your interview with Wipro is scheduled for 20 Nov at 10:00 AM.',
             time: '1 day ago',
             unread: true,
             link: '#'
         },
         {
             id: 4,
-            icon: '✅',
+            icon: 'Profile',
             title: 'Profile Updated',
-            message: 'Your profile has been successfully updated',
+            message: 'Your profile information was updated successfully.',
             time: '2 days ago',
             unread: false,
             link: '#'
         },
         {
             id: 5,
-            icon: '🎓',
-            title: 'Resume Tips',
-            message: 'Check out our latest guide on creating an impressive resume',
+            icon: 'Guide',
+            title: 'Resume Guidance',
+            message: 'Review the latest resume checklist before your next application.',
             time: '3 days ago',
             unread: false,
             link: '#'
@@ -557,7 +577,7 @@
         if (notifications.length === 0) {
             notificationList.innerHTML = `
                 <div class="no-notifications">
-                    <div class="no-notifications-icon">🔔</div>
+                    <div class="no-notifications-icon">i</div>
                     <p>No notifications yet</p>
                 </div>
             `;
@@ -576,7 +596,7 @@
                     <div class="notification-title">${notification.title}</div>
                     <div class="notification-message">${notification.message}</div>
                     <div class="notification-time">
-                        <span>🕐 ${notification.time}</span>
+                        <span>${notification.time}</span>
                         ${notification.unread ? '<span class="unread-dot"></span>' : ''}
                     </div>
                 </div>
