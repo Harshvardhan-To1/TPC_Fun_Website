@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Update Profile - SCSIT DAVV</title>
+  <title>Update Profile | SCSIT DAVV Placement Portal</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     * {
@@ -412,11 +412,12 @@
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     }
   </style>
+  <link rel="stylesheet" href="theme.css">
 </head>
 <body>
   <!-- Header -->
   <div class="header">
-    <h1>✏️ Update Profile</h1>
+    <h1>Update Profile</h1>
     <nav class="nav-links">
       <a href="/">Home</a>
       <a href="/profile.html">View Profile</a>
@@ -428,14 +429,14 @@
     <div class="form-card">
       <!-- Form Header -->
       <div class="form-header">
-        <div class="icon">👤</div>
+        <div class="icon">PROFILE</div>
         <h2>Update Your Profile</h2>
         <p>Keep your information up to date for better opportunities</p>
       </div>
 
       <!-- Info Box -->
       <div class="info-box">
-        <span class="icon">💡</span>
+        <span class="icon">INFO</span>
         <div class="info-box-text">
           Tip: Complete your profile to increase visibility to recruiters
         </div>
@@ -446,7 +447,7 @@
         <!-- Full Name -->
         <div class="form-group">
           <label for="full_name">
-            <span class="icon">👤</span>
+            <span class="icon">ID</span>
             Full Name
             <span class="required">*</span>
           </label>
@@ -463,7 +464,7 @@
         <!-- Email -->
         <div class="form-group">
           <label for="email">
-            <span class="icon">📧</span>
+            <span class="icon">MAIL</span>
             Email Address
             <span class="required">*</span>
           </label>
@@ -480,7 +481,7 @@
         <!-- Phone -->
         <div class="form-group">
           <label for="phone">
-            <span class="icon">📱</span>
+            <span class="icon">PHONE</span>
             Phone Number
             <span class="required">*</span>
           </label>
@@ -498,7 +499,7 @@
         <!-- Resume -->
         <div class="form-group">
           <label for="resume">
-            <span class="icon">📄</span>
+            <span class="icon">CV</span>
             Resume / CV
           </label>
           
@@ -510,7 +511,7 @@
               accept=".pdf,.doc,.docx"
             >
             <div class="file-upload-content">
-              <div class="file-upload-icon">📤</div>
+              <div class="file-upload-icon">UPLOAD</div>
               <div class="file-upload-text">Click to upload or drag and drop</div>
               <div class="file-upload-hint">PDF, DOC, DOCX (Max 5MB)</div>
               <div class="file-name" id="fileName"></div>
@@ -519,7 +520,7 @@
 
           <div id="currentResume" class="current-resume" style="display: none;">
             <div class="current-resume-info">
-              <span class="current-resume-icon">✅</span>
+              <span class="current-resume-icon">OK</span>
               <div>
                 <div class="current-resume-text">Current Resume Uploaded</div>
                 <div class="current-resume-hint">Upload a new file to replace</div>
@@ -534,10 +535,10 @@
         <!-- Buttons -->
         <div class="button-group">
           <button type="submit" class="btn btn-primary" id="submitBtn">
-            💾 Save Changes
+            Save Changes
           </button>
           <button type="button" class="btn btn-secondary" onclick="window.location.href='/profile.html'">
-            ↩️ Cancel
+            Cancel
           </button>
         </div>
       </form>
@@ -595,7 +596,7 @@
     form.addEventListener('submit', function(e) {
       // Disable submit button to prevent double submission
       submitBtn.disabled = true;
-      submitBtn.textContent = '⏳ Saving...';
+      submitBtn.textContent = 'Saving...';
     });
 
     // Phone number formatting

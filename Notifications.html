@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Notifications - SCSIT DAVV</title>
+  <title>Notifications | SCSIT DAVV Placement Portal</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     * {
@@ -306,15 +306,16 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="theme.css">
 </head>
 <body>
   <!-- Header -->
   <div class="header">
-    <h1>🔔 All Notifications</h1>
+    <h1>All Notifications</h1>
     <nav class="nav-links">
       <a href="/">Home</a>
       <a href="/profile.html">Profile</a>
-      <a href="/chatbot.html">Chatbot</a>
+      <a href="/chatbot.html">Career Assistant</a>
     </nav>
   </div>
 
@@ -340,7 +341,7 @@
     let notifications = [
       {
         id: 1,
-        icon: '💼',
+        icon: 'Drive',
         title: 'New Company Drive - TCS',
         message: 'TCS is conducting a campus placement drive on 15th November 2025. Eligible students can apply through the portal. The drive will include aptitude test, technical interview, and HR round.',
         time: '2 hours ago',
@@ -350,7 +351,7 @@
       },
       {
         id: 2,
-        icon: '📝',
+        icon: 'Update',
         title: 'Application Shortlisted',
         message: 'Congratulations! Your application for Infosys has been shortlisted for the next round. Please check your email for further instructions and interview schedule.',
         time: '5 hours ago',
@@ -360,7 +361,7 @@
       },
       {
         id: 3,
-        icon: '📅',
+        icon: 'Interview',
         title: 'Interview Scheduled - Wipro',
         message: 'Your interview with Wipro has been scheduled for 20th November 2025 at 10:00 AM. Please be prepared with your resume and arrive 15 minutes early. Location: Campus Auditorium.',
         time: '1 day ago',
@@ -370,7 +371,7 @@
       },
       {
         id: 4,
-        icon: '🎓',
+        icon: 'Workshop',
         title: 'Placement Preparation Workshop',
         message: 'Join us for a comprehensive placement preparation workshop covering resume building, interview skills, and aptitude test strategies. Date: 12th November, Time: 2:00 PM',
         time: '2 days ago',
@@ -380,7 +381,7 @@
       },
       {
         id: 5,
-        icon: '✅',
+        icon: 'Profile',
         title: 'Profile Updated Successfully',
         message: 'Your profile has been successfully updated with the new information. Recruiters can now view your updated profile.',
         time: '2 days ago',
@@ -390,7 +391,7 @@
       },
       {
         id: 6,
-        icon: '🏢',
+        icon: 'Company',
         title: 'New Company Registered',
         message: 'Accenture has registered for campus placements. They are looking for candidates with strong technical and communication skills. Application deadline: 18th November.',
         time: '3 days ago',
@@ -400,7 +401,7 @@
       },
       {
         id: 7,
-        icon: '📊',
+        icon: 'Guide',
         title: 'Resume Tips & Tricks',
         message: 'Check out our latest guide on creating an impressive resume that stands out. Learn about ATS optimization, keyword usage, and formatting best practices.',
         time: '3 days ago',
@@ -410,7 +411,7 @@
       },
       {
         id: 8,
-        icon: '🎯',
+        icon: 'Reminder',
         title: 'Application Deadline Reminder',
         message: 'Reminder: The application deadline for Cognizant placement drive is tomorrow (10th November). Don\'t miss this opportunity!',
         time: '4 days ago',
@@ -439,7 +440,7 @@
       if (filteredNotifications.length === 0) {
         notificationsList.innerHTML = `
           <div class="empty-state">
-            <div class="empty-icon">🔔</div>
+            <div class="empty-icon">Info</div>
             <div class="empty-text">No notifications found</div>
             <div class="empty-subtext">You're all caught up!</div>
           </div>
@@ -468,7 +469,7 @@
                 ${notification.title}
                 ${notification.unread ? '<span class="unread-indicator"></span>' : ''}
               </div>
-              <div class="notification-time">🕐 ${notification.time}</div>
+              <div class="notification-time">${notification.time}</div>
             </div>
             <div class="notification-message">${notification.message}</div>
             ${actionsHTML}

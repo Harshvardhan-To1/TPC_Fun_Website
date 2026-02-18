@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Placemate — Upload Resume</title>
+  <title>Upload Resume | SCSIT DAVV Placement Portal</title>
   <link rel="stylesheet" href="uploadResume.css">
   <style>
     * {
@@ -419,18 +419,20 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="theme.css">
 </head>
 <body>
 <header>
   <div class="brand">
-    <img src="../images/logo3.png" alt="Placemate Logo" class="logo">
+    <img src="images/logo3.png" alt="SCSIT DAVV Placement Portal Logo" class="logo">
+    <h1>SCSIT DAVV Placement Portal</h1>
   </div>
   <nav>
-    <a href="/">🏠 Home</a>
-    <a href="success-stories-page">🌟 Stories</a>
-    <a href="uploadResume.html">📤 Upload Resume</a>
-    <a href="chatbot.html">🤖 AI Chatbot</a>
-    <a href="profile.html">👤 Profile</a>
+    <a href="/">Home</a>
+    <a href="/success-stories-page">Success Stories</a>
+    <a href="uploadResume.html">Upload Resume</a>
+    <a href="chatbot.html">Career Assistant</a>
+    <a href="profile.html">Profile</a>
   </nav>
   <div class="auth-links">
     <a href="signin.html">Sign In</a>
@@ -445,7 +447,7 @@
   <div class="upload-card">
     <form id="upload-form" action="/upload" method="post" enctype="multipart/form-data">
       <div class="upload-area" id="upload-area">
-        <div class="upload-icon">📄</div>
+        <div class="upload-icon">CV</div>
         <div class="upload-text">Drag & Drop your resume here</div>
         <div class="upload-subtext">or</div>
         <button type="button" class="browse-button" onclick="document.getElementById('resume').click()">
@@ -458,12 +460,12 @@
 
       <div class="file-preview" id="file-preview">
         <div class="file-info">
-          <div class="file-icon">📎</div>
+          <div class="file-icon">FILE</div>
           <div class="file-details">
             <div class="file-name" id="file-name"></div>
             <div class="file-size" id="file-size"></div>
           </div>
-          <button type="button" class="remove-file" onclick="removeFile()" title="Remove file">×</button>
+          <button type="button" class="remove-file" onclick="removeFile()" title="Remove file">x</button>
         </div>
 
         <div class="progress-container" id="progress-container">
@@ -474,7 +476,7 @@
         </div>
 
         <button type="submit" class="upload-button" id="upload-button">
-          🚀 Upload Resume
+          Upload Resume
         </button>
       </div>
 
@@ -482,7 +484,7 @@
     </form>
 
     <div class="supported-formats">
-      <h3>📋 Supported Formats</h3>
+      <h3>Supported Formats</h3>
       <div class="formats-list">
         <span class="format-tag">PDF</span>
         <span class="format-tag">DOC</span>
@@ -491,7 +493,7 @@
     </div>
 
     <div class="tips-section">
-      <h3>💡 Tips for a Great Resume</h3>
+      <h3>Resume Best Practices</h3>
       <ul>
         <li>Keep your resume to 1-2 pages</li>
         <li>Use a professional font and clean layout</li>
@@ -504,7 +506,7 @@
 </main>
 
 <footer>
-  © Placemate — Campus Placement Management
+  SCSIT DAVV | Campus Placement Cell
 </footer>
 
 <script>
@@ -624,8 +626,8 @@
 
       xhr.addEventListener('load', () => {
         if (xhr.status === 200) {
-          progressText.textContent = 'Upload complete! ✓';
-          showMessage('Resume uploaded successfully! 🎉', 'success');
+          progressText.textContent = 'Upload complete.';
+          showMessage('Resume uploaded successfully.', 'success');
           
           // Reset form after delay
           setTimeout(() => {

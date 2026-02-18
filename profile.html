@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Profile - SCSIT DAVV</title>
+  <title>My Profile | SCSIT DAVV Placement Portal</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     * {
@@ -363,15 +363,16 @@
       opacity: 0.9;
     }
   </style>
+  <link rel="stylesheet" href="theme.css">
 </head>
 <body>
   <!-- Header -->
   <div class="header">
-    <h1>🎓 My Profile</h1>
+    <h1>My Profile</h1>
     <nav class="nav-links">
       <a href="/">Home</a>
-      <a href="/success-stories-page">Stories</a>
-      <a href="/chatbot.html">Chatbot</a>
+      <a href="/success-stories-page">Success Stories</a>
+      <a href="/chatbot.html">Career Assistant</a>
       <a href="/student/drives">Drives</a>
       <a href="/student/my-applications">My Applications</a>
     </nav>
@@ -388,9 +389,9 @@
     <div class="profile-card">
       <!-- Profile Header -->
       <div class="profile-header">
-        <div class="profile-avatar">👤</div>
+        <div class="profile-avatar">USER</div>
         <h2 id="profile-name">Student Profile</h2>
-        <span class="profile-status">✓ Active Student</span>
+        <span class="profile-status">Active Student</span>
       </div>
 
       <!-- Quick Stats -->
@@ -415,29 +416,29 @@
         
         <div class="info-grid">
           <div class="info-item">
-            <label>👤 Full Name</label>
+            <label>Full Name</label>
             <div class="value" id="full-name"></div>
           </div>
           
           <div class="info-item">
-            <label>📧 Email Address</label>
+            <label>Email Address</label>
             <div class="value" id="email"></div>
           </div>
           
           <div class="info-item">
-            <label>📱 Phone Number</label>
+            <label>Phone Number</label>
             <div class="value" id="phone"></div>
           </div>
           
           <div class="info-item">
-            <label>📄 Resume Status</label>
+            <label>Resume Status</label>
             <div class="value" id="resume-status"></div>
           </div>
         </div>
 
         <!-- Resume Section -->
         <div class="resume-section" id="resume-section" style="display: none;">
-          <h3>📄 Your Resume</h3>
+          <h3>Your Resume</h3>
           <p style="margin-bottom: 15px; opacity: 0.9;">Your resume is ready to share with recruiters</p>
           <span id="resume-link"></span>
         </div>
@@ -445,10 +446,10 @@
 
       <!-- Action Buttons -->
       <div id="profile-actions" class="profile-actions">
-        <a href="/updateProfile.html" class="btn btn-primary">✏️ Update Profile</a>
-        <a href="/student/drives" class="btn btn-secondary">💼 Apply to Companies</a>
-        <a href="/student/documents" class="btn btn-secondary">📁 Documents</a>
-        <a href="/logout" class="btn btn-danger">🚪 Logout</a>
+        <a href="/updateProfile.html" class="btn btn-primary">Update Profile</a>
+        <a href="/student/drives" class="btn btn-secondary">Apply to Companies</a>
+        <a href="/student/documents" class="btn btn-secondary">Documents</a>
+        <a href="/logout" class="btn btn-danger">Logout</a>
       </div>
     </div>
   </div>
@@ -506,11 +507,11 @@
         const resumeSection = document.getElementById('resume-section');
         
         if (data.resume_path && data.resume_path.trim() !== '') {
-          resumeStatusElement.innerHTML = '✅ <span style="color: #1e7e34;">Uploaded</span>';
-          resumeLinkElement.innerHTML = `<a href="${data.resume_path}" target="_blank" class="resume-link">📥 View Resume</a>`;
+          resumeStatusElement.innerHTML = '<span style="color: #1e7e34;">Uploaded</span>';
+          resumeLinkElement.innerHTML = `<a href="${data.resume_path}" target="_blank" class="resume-link">View Resume</a>`;
           resumeSection.style.display = 'block';
         } else {
-          resumeStatusElement.innerHTML = '<span class="empty-field">❌ Not uploaded</span>';
+          resumeStatusElement.innerHTML = '<span class="empty-field">Not uploaded</span>';
           resumeSection.style.display = 'none';
         }
 
@@ -527,7 +528,7 @@
         console.error('Error:', error);
         document.getElementById('loading').style.display = 'none';
         const errorElement = document.getElementById('error-message');
-        errorElement.textContent = '⚠️ Error loading profile. Please try refreshing the page or contact support.';
+        errorElement.textContent = 'Error loading profile. Please refresh and try again, or contact support.';
         errorElement.style.display = 'block';
       });
   </script>

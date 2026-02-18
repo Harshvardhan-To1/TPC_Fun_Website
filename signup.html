@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Create Your Account</title>
+  <title>Create Account | SCSIT DAVV Placement Portal</title>
   <link rel="stylesheet" href="applyDrive.css">
   <style>
     * {
@@ -343,6 +343,7 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="theme.css">
 </head>
 <body>
   <div class="container">
@@ -499,7 +500,7 @@
     function showFieldError(input, icon, errorElement, message) {
       input.classList.add('error');
       input.classList.remove('success');
-      icon.textContent = '✕';
+      icon.textContent = 'x';
       icon.classList.add('show', 'error');
       icon.classList.remove('success');
       errorElement.textContent = message;
@@ -510,7 +511,7 @@
     function showFieldSuccess(input, icon, errorElement) {
       input.classList.add('success');
       input.classList.remove('error');
-      icon.textContent = '✓';
+      icon.textContent = 'OK';
       icon.classList.add('show', 'success');
       icon.classList.remove('error');
       errorElement.classList.remove('show');
