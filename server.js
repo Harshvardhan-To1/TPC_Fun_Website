@@ -5,7 +5,7 @@ const fs = require('fs');
 const db = require('./database.js');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const Groq = require('groq-sdk');
 const nodemailer = require('nodemailer');
 
@@ -2024,5 +2024,5 @@ app.get('/api/recruiter/applications', recruiterApiRoute, async (req, res) => {
 // Start server
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
-  console.log('Make sure the "uploads" directory exists!');
+  console.log('Upload directories initialized and ready.');
 });
